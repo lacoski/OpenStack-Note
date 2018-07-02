@@ -47,8 +47,9 @@ OpenStack là một phần mềm mã nguồn mở, dùng để triển khai Clou
 - OpenStack dashboard (code-name Horizon): cung cấp cho người quản trị cũng như người dùng giao diện đồ họa để truy cập, cung cấp và tự động tài nguyên cloud. Việc thiết kế có thể mở rộng giúp dễ dàng thêm vào các sản phẩm cũng như dịch vụ ngoài như billing, monitoring và các công cụ giám sát khác.
 
 ```
-5 project core của OpenStack:
-- Cinder, nova, neutron, cinder, keystone
+
+Project core của OpenStack:
+- Cinder, nova, neutron, cinder, keystone, glance
 ```
 
 ### Ý nghĩa Project:
