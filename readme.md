@@ -7,3 +7,8 @@ Ghi chép cho tôi về OpenStack
 
 ### Neutron
 #### [1. Tổng quan về Neutron](docs/neutron/network-ops-overview.md)
+
+### Nova
+#### [1. Tổng quan về Nova](docs/nova/nova-overview.md)
+
+
