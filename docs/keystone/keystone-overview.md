@@ -167,3 +167,9 @@ Bản tóm tắt cho các services và backends đi kèm.
 
 ![](images/keystone-overview-6.png)
 > Keystone Workflow
+
+# Nguồn
+
+https://github.com/hocchudong/thuctap012017/blob/master/DucPX/OpenStack/Keystone/docs/Overview_Keystone.md#III
+
+https://github.com/thaonguyenvan/meditech-thuctap/blob/master/ThaoNV/Tim%20hieu%20OpenStack/docs/keystone/Fundamental-keystone.md#catalog
