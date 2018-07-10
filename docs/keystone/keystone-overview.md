@@ -36,10 +36,13 @@ Môi trường cloud theo mô hình dịch vụ Infrastructure-as-a-Service laye
 ### Project
 
 Nội dung:
-- Khái niệm Project sử dụng để nhóm và cô lập các nguồn tài nguyên sử dụng cho dịch vụ. Project tập hợp 1 nhóm tài nguyên, chỉ 1 số user chỉ định mới có thể truy cập, tách biệt hoàn toàn với các project khác.
+- Khái niệm Project sử dụng để nhóm và cô lập các nguồn tài nguyên sử dụng cho dịch vụ.
+- Project tập hợp 1 nhóm tài nguyên, chỉ 1 số user chỉ định mới có thể truy cập, tách biệt hoàn toàn với các project khác.
 - Ban đầu project được gọi là tenant sau đó được đổi tên thành project.
 - Mục đích cơ bản của keystone là tạo project, xác định user được quyền truy cập project.
+- Việc gán role cho user đôi khi còn được gọi là "grant" trong Openstack Document.
 
+![](images/keystone-overview-7.png)
 
 ### Domain
 Ban đầu không có cơ chế hạn chế sự xuất hiện của các project (Tạo project tùy ý). Điều này có thể gây nhầm lẫn hay xung đột không đáng có giữa các tên của project của các tổ chức. Tên user cũng có thể dẫn tới sự nhầm lẫn nếu hai tổ chức có user có tên giống nhau.
@@ -48,9 +51,12 @@ Vì vậy, xuất hiện khái niệm domain, nó dùng để cô lập project 
 
 Mỗi domain là tập hợp các user, group, project. Nó cho phép người dùng phân chia tài nguyên rõ ràng, tránh xung đột.
 
+![](images/keystone-overview-8.png)
 
 ### User, User Groups (Actor)
-Trong keystone, User và User Group là các đối tượng được cấp phép truy cập tới các nguồn tài nguyên đã cô lập trong các domain và các project. Group tập hợp các user. User và User Group được gọi là các `Actor`.
+Trong keystone, User và User Group là các đối tượng được cấp phép truy cập tới các nguồn tài nguyên đã cô lập trong các domain và các project.
+
+> Group tập hợp các user. User và User Group được gọi là các `Actor`.
 
 ![](images/keystone-overview-1.png)
 > Mối quan hệ giữa domain, project, user, và group:
