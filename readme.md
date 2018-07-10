@@ -13,3 +13,6 @@ Ghi chép cho tôi về OpenStack
 
 ### Keystone
 #### [1. Tổng quan về KeyStone](docs/keystone/keystone-overview.md)
+
+### Glance
+#### 1. Tổng quan về Glance
