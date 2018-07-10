@@ -11,4 +11,5 @@ Ghi chép cho tôi về OpenStack
 ### Nova
 #### [1. Tổng quan về Nova](docs/nova/nova-overview.md)
 
-
+### Keystone
+#### [1. Tổng quan về KeyStone](docs/keystone/keystone-overview.md)
