@@ -37,7 +37,7 @@ Glance có các thành phần:
  - Glance Store: Giao diện tích hợp giữa Glance và các data store.
  - Registry Layer: Layer không bắt buộc để tổ chức giao tiếp mang tính bảo mật giữa domain và DAL nhờ việc sử dụng một dịch vụ riêng biệt.
 
-pic 1
+![](images/glance-overview-1.png)
 
 ## Các định dạng image của Glance
 - Khi upload một image lên glance, ta phải chỉ rõ định dạng của các Virtual machine image.
@@ -77,7 +77,7 @@ Khi tạo một image:
 
 Ta có thể deactive và reactive các image đã upload thành công bằng cách sử dụng command. Glance status flow được mô tả theo hình sau:
 
-pic 2
+![](images/glance-overview-2.jpg)
 
 Các trạng thái của image:
 - queued : Định danh của image được bảo vệ trong Glance registry. Không có dữ liệu nào của image được tải lên Glance và kích thước của image không được thiết lập về zero khi khởi tạo.
@@ -110,7 +110,7 @@ Trước khi vận hành máy ảo, các thành phần ban đầu:
 - Compute node chứa các vcpu có sẵn, tài nguyên bộ nhớ và tài nguyên đĩa cục bộ
 - Cinder-volume chứa số lượng volumes đã định nghĩa trước đó.
 
-pic 3
+![](images/glance-overview-3.jpg)
 > Sơ đồ dưới đây chỉ ra trạng thái của hệ thống trước khi vận hành máy ảo
 
 
@@ -128,6 +128,7 @@ Trước khi vận hành 1 máy ảo, ta phải chọn:
 
 > Nếu volume store nằm trên một mạng riêng biệt , tùy chọn `my_block_storage_ip` trong tập tin cấu hình storage node sẽ chỉ đạo giao tiếp với compute node.
 
+![](images/glance-overview-4.jpg)
 # Nguồn
 
 https://github.com/thaonguyenvan/meditech-thuctap/blob/master/ThaoNV/Tim%20hieu%20OpenStack/docs/glance/glance-overview.md
