@@ -1,3 +1,5 @@
+# Cài đặt OPS manual
+---
 Configure network interfaces
 
 # Bước 1
@@ -26,6 +28,11 @@ fping 172.16.4.200 172.16.4.201 172.16.4.202
 fping 10.0.3.10 10.0.3.11 10.0.3.12
 fping 172.16.9.10 172.16.9.11 172.16.9.12
 fping controller1 compute1 compute2
+
+yum install -y python-setuptools
+sudo yum install -y wget crudini fping
+yum install -y epel-release
+sudo yum install -y byobu
 
 # Bước 2
 ## Tại controller
