@@ -16,3 +16,6 @@ Ghi chép cho tôi về OpenStack
 
 ### Glance
 #### [1. Tổng quan về Glance](docs/glance/glance-overview.md)
+
+### Cinder
+#### [1. Tổng quan về Cinder](docs/cinder/cinder-overview.md)
