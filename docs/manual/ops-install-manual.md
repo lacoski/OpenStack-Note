@@ -1,18 +1,114 @@
-# Cài đặt OPS manual
+# Cài đặt OpenStack manual (Queen)
 ---
-Configure network interfaces
+## Phần 1: Chuẩn bị các node
+Các phần:
+- Cấu hình Hostname, static interface
+- Cấu hình host file
+- Tắt Firewalld
+- Tắt SELinux
+- Cài gói mặc định
+- Test ping các node
 
-# Bước 1
+### Bước 1: Cấu hình hostname, static interface
+#### Tại CONTROLLER
 Cấu hình hostname
+```
+hostnamectl set-hostname controller
+```
 
-Set ip trên controller và compute
+Cấu hình ip tĩnh
+```
+# Config interface eno16777984
+nmcli c modify eno16777984 ipv4.addresses 172.16.4.200/20
+nmcli c modify eno16777984 ipv4.gateway 172.16.10.1
+nmcli c modify eno16777984 ipv4.dns 8.8.8.8
+nmcli c modify eno16777984 ipv4.method manual
+nmcli con mod eno16777984 connection.autoconnect yes
+
+# Config interface eno33557248
+nmcli c modify eno33557248 ipv4.addresses 10.0.3.10/24
+nmcli c modify eno33557248 ipv4.method manual
+nmcli con mod eno33557248 connection.autoconnect yes
+
+# ens224
+nmcli c modify ens224 ipv4.addresses 172.16.9.10/24
+nmcli c modify ens224 ipv4.method manual
+nmcli con mod ens224 connection.autoconnect yes
+```
+
+#### Tại COMPUTE1
+
+Cấu hình hostname
+```
+hostnamectl set-hostname compute1
+```
+
+Cấu hình ip tĩnh
+```
+# Config interface eno16777984
+nmcli c modify eno16777984 ipv4.addresses 172.16.4.201/20
+nmcli c modify eno16777984 ipv4.gateway 172.16.10.1
+nmcli c modify eno16777984 ipv4.dns 8.8.8.8
+nmcli c modify eno16777984 ipv4.method manual
+nmcli con mod eno16777984 connection.autoconnect yes
+
+# Config interface eno33557248
+nmcli c modify eno33557248 ipv4.addresses 10.0.3.11/24
+nmcli c modify eno33557248 ipv4.method manual
+nmcli con mod eno33557248 connection.autoconnect yes
+
+# ens224
+nmcli c modify ens224 ipv4.addresses 172.16.9.11/24
+nmcli c modify ens224 ipv4.method manual
+nmcli con mod ens224 connection.autoconnect yes
+```
+
+#### Tại COMPUTE2
+
+Cấu hình hostname
+```
+hostnamectl set-hostname compute2
+```
+
+Cấu hình ip tĩnh
+```
+# Config interface eno16777984
+nmcli c modify eno16777984 ipv4.addresses 172.16.4.202/20
+nmcli c modify eno16777984 ipv4.gateway 172.16.10.1
+nmcli c modify eno16777984 ipv4.dns 8.8.8.8
+nmcli c modify eno16777984 ipv4.method manual
+nmcli con mod eno16777984 connection.autoconnect yes
+
+# Config interface eno33557248
+nmcli c modify eno33557248 ipv4.addresses 10.0.3.12/24
+nmcli c modify eno33557248 ipv4.method manual
+nmcli con mod eno33557248 connection.autoconnect yes
+
+# ens224
+nmcli c modify ens224 ipv4.addresses 172.16.9.12/24
+nmcli c modify ens224 ipv4.method manual
+nmcli con mod ens224 connection.autoconnect yes
+```
+
+### Bước 2: Cấu hình Firewalld, SELinux
+> Tại tất cả các host
+
 Disable firewalld, selinux
+```
+sed -i 's/SELINUX=enforcing/SELINUX=disabled/g' /etc/sysconfig/selinux
+sed -i 's/SELINUX=enforcing/SELINUX=disabled/g' /etc/selinux/config
+systemctl stop firewalld
+systemctl disable firewalld
+```
 
-Cấu hình Host File
-> Host file sử dụng đường MNGT
 
-Toàn bộ gói cài đặt sẽ sử dụng đường MNGT
+### Cấu hình hostfile
+> Tại tất cả các host
 
+Lưu ý:
+- Hoạt động giám sát, cài đặt gói thông qua đường MNGT
+
+Nội dung
 ```
 # controller1
 172.16.4.200       controller1
@@ -24,6 +120,8 @@ Toàn bộ gói cài đặt sẽ sử dụng đường MNGT
 172.16.4.202       compute2
 ```
 
+Lệnh thực thi
+```
 echo '
 # controller1
 172.16.4.200       controller1
@@ -33,67 +131,90 @@ echo '
 
 # compute2
 172.16.4.202       compute2' >> /etc/hosts
+```
 
+Kiểm tra
+```
 fping 172.16.4.200 172.16.4.201 172.16.4.202
 fping 10.0.3.10 10.0.3.11 10.0.3.12
 fping 172.16.9.10 172.16.9.11 172.16.9.12
 fping controller1 compute1 compute2
+```
 
+### Bước 3: Cài đặt các gói cần thiết
+```
 yum install -y python-setuptools
 sudo yum install -y wget crudini fping
 yum install -y epel-release
 sudo yum install -y byobu
+```
 
-# Bước 2
-## Tại controller
-cấu hình ntpd
-
+## Phần 2: Cấu hình NTP tại các node
+### Tại controller
+Cài đặt gói
+```
 yum install chrony -y
+```
 
+Thiết lập config
+```
 sed -i "s/server 0.centos.pool.ntp.org iburst/server vn.pool.ntp.org iburst/g" /etc/chrony.conf
-
 sed -i 's/server 1.centos.pool.ntp.org iburst/#server 1.centos.pool.ntp.org iburst/g' /etc/chrony.conf
-
 sed -i 's/server 2.centos.pool.ntp.org iburst/#server 2.centos.pool.ntp.org iburst/g' /etc/chrony.conf
-
 sed -i 's/server 3.centos.pool.ntp.org iburst/#server 3.centos.pool.ntp.org iburst/g' /etc/chrony.conf
-
 sed -i 's/#allow 192.168.0.0\/16/allow 172.16.0.0\/20/g' /etc/chrony.conf
+```
 
+Chạy, thiết lạp service
+```
 systemctl enable chronyd.service
 systemctl start chronyd.service
-
+```
 chronyc sources
-## Tại compute
-
+### Tại compute
+Cài đặt gói
+```
 yum install chrony -y
+```
 
+Thiết lập config
+```
 sed -i "s/server 0.centos.pool.ntp.org iburst/server 172.16.4.200 iburst/g" /etc/chrony.conf
-
 sed -i 's/server 1.centos.pool.ntp.org iburst/#server 1.centos.pool.ntp.org iburst/g' /etc/chrony.conf
-
 sed -i 's/server 2.centos.pool.ntp.org iburst/#server 2.centos.pool.ntp.org iburst/g' /etc/chrony.conf
-
 sed -i 's/server 3.centos.pool.ntp.org iburst/#server 3.centos.pool.ntp.org iburst/g' /etc/chrony.conf
+```
 
+Thiết lập, chạy service
+```
 systemctl enable chronyd.service
 systemctl start chronyd.service
+```
 
+Đồng bộ thời gian
+```
 chronyc sources
+```
 
-# OpenStack packages
+## Phần 3: Cài đặt các gói cần thiết OpenStack
 > Tại tất cả các node
 
+Cài đặt OPS Queen package
+```
 yum install centos-release-openstack-queens -y
-
 yum upgrade -y
-
 yum install python-openstackclient -y
-
 yum install openstack-selinux -y
+```
 
-# SQL database
-> Database typically runs on the controller node. 
+## Phần 4: Thiết lập DB SQL
+> Thiết lập trên Controller
+
+Lưu ý:
+- Thông thường DB được chạy trên node controller
+- Có thể chạy trên node riêng phục vụ nhu cầu
+
+Cài đặt gói
 ```
 yum install mariadb mariadb-server python2-PyMySQL -y
 ```
@@ -103,27 +224,30 @@ Tạo backup `/etc/my.cnf.d/openstack.cnf` nếu có:
 cp /etc/my.cnf.d/openstack.cnf /etc/my.cnf.d/openstack.cnf.bak
 ```
 
-```
-vi /etc/my.cnf.d/openstack.cnf
-```
+Chỉnh sửa sql config
+> Dường dẫn `/etc/my.cnf.d/openstack.cnf`
 
 ```
+cat << EOF > /etc/my.cnf.d/openstack.cnf
 [mysqld]
-bind-address = 172.16.4.200 # ip controller
-
+bind-address = 172.16.4.200
 default-storage-engine = innodb
 innodb_file_per_table = on
 max_connections = 4096
 collation-server = utf8_general_ci
 character-set-server = utf8
+EOF
 ```
+Lưu ý:
+- `bind-address` là IP controller
 
 Khởi động lại dịch vụ
 ```
 systemctl enable mariadb.service
 systemctl start mariadb.service
 ```
-Secure the database service
+
+Thiết lập mật khẩu DB
 ```
 mysql_secure_installation
 
@@ -138,88 +262,170 @@ Remove test database and access to it? [Y/n]: y
 Reload privilege tables now? [Y/n]: y
 ```
 
-# Message queue for RHEL and CentOS
-> Message queue service typically runs on the controller node
+## Phần 5: Thiết lập Message Queue
+> Thiết lập trên node `CONTROLLER`
 
-> OpenStack supports several message queue services including RabbitMQ, Qpid, and ZeroMQ. However, most distributions that package OpenStack support a particular message queue service. This guide implements the RabbitMQ message queue service because most distributions support it.
+> Message queue service thường chạy trên `controller`
 
+Note: 
+- Openstack hỗ trợ 1 số loại queue bao gồm: 
+ - RabbitMQ
+ - Qpid
+ - ZeroMQ
+
+- Bài lab hiện tại sẽ sử dụng RabbitMQ message queue service, phiên bản được sử dụng rộng rãi nhất cho OPS.
+
+Cài đặt gói
+```
 yum install rabbitmq-server -y
+```
 
+Chạy dịch vụ
+```
 systemctl enable rabbitmq-server.service
-
 systemctl start rabbitmq-server.service
+```
 
+Khởi tạo và phân quyền user
+```
 rabbitmqctl add_user openstack Welcome123
-
 rabbitmqctl set_permissions openstack ".*" ".*" ".*"
+```
 
-# Memcached
-> The memcached service typically runs on the controller node
+## Phần 6: Thiết lập Memcached
+> Thiết lập trên node `CONTROLLER`
 
+> Memcached service chạy trên `controller` 
+
+Cài đặt gói
+```
 yum install memcached python-memcached -y
+```
 
-edit: /etc/sysconfig/memcached 
+Thiết lập cấu hình
+> File `/etc/sysconfig/memcached`
+
 ```
 sed -i 's/OPTIONS=\"-l 127.0.0.1,::1\"/OPTIONS=\"-l 172.16.4.200,::1\"/g' /etc/sysconfig/memcached
 ```
 
+Khởi động dịch vụ
+```
 systemctl enable memcached.service
 systemctl start memcached.service
-
-# Etcd (bỏ qua)
-
-# Minimal deployment for Queens
-Keystone Installation Tutorial
-> The OpenStack system consists of several key services that are separately installed. These services work together depending on your cloud needs and include the Compute, Identity, Networking, Image, Block Storage, Object Storage, Telemetry, Orchestration, and Database services. You can install any of these projects separately and configure them stand-alone or as connected entities.
+```
 
 
-## Keystone Installation Tutorial for Red Hat Enterprise Linux and CentOS
+## Thiết lập cơ bản nhất cho OPENSTACK QUEEN
+### Tổng quản
+QpenStack bao gồm rất nhiều thành phân riêng biệt. Chúng làm việc với nhau để tạo thành dịch vụ cloud.
 
-The OpenStack Identity service provides a single point of integration for managing authentication, authorization, and a catalog of services.
+Các thành phần sẽ triển khai bao gồm:
+- Compute - Nova
+- Identity - KeyStone
+- Networking - Neutron
+- Image - Glance
+- Block Storage - Cinder
+- Dashboard - Horizon
 
-## Install and configure
-> install and configure the OpenStack Identity service, code-named keystone, `on the controller node`
+## Phần 1: Cài đặt KeyStone Keystone
+### Tổng quan
+- Là dịch vụ cung cấp OpenStack Identity service.  
+- Quản trị định danh, chứng thực, quản lý truy cập.
 
-create a database.
+## Cài đặt tại Controller
 
+### Tạo database dịch vụ
+```
 mysql -u root -pWelcome123 
-Enter password: Welcome123
 
 CREATE DATABASE keystone;
 GRANT ALL PRIVILEGES ON keystone.* TO 'keystone'@'localhost' IDENTIFIED BY 'Welcome123';
 GRANT ALL PRIVILEGES ON keystone.* TO 'keystone'@'%' IDENTIFIED BY 'Welcome123';
 exit
+```
 
-Cài đặt keystone
-
+### Cài đặt keystone
+```
 yum install openstack-keystone httpd mod_wsgi -y
+```
 
+### Tạo bản backup
+```
 cp /etc/keystone/keystone.conf /etc/keystone/keystone.conf.bak
+```
 
-cat /etc/keystone/keystone.conf | egrep -v "(^#.*|^$)"
+### Cấu hình File
+```
+cat << EOF > /etc/keystone/keystone.conf
+[DEFAULT]
+[application_credential]
+[assignment]
+[auth]
+[cache]
+[catalog]
+[cors]
+[credential]
+[database]
+connection = mysql+pymysql://keystone:Welcome123@172.16.4.200/keystone
+[domain_config]
+[endpoint_filter]
+[endpoint_policy]
+[eventlet_server]
+[federation]
+[fernet_tokens]
+[healthcheck]
+[identity]
+[identity_mapping]
+[ldap]
+[matchmaker_redis]
+[memcache]
+[oauth1]
+[oslo_messaging_amqp]
+[oslo_messaging_kafka]
+[oslo_messaging_notifications]
+[oslo_messaging_rabbit]
+[oslo_messaging_zmq]
+[oslo_middleware]
+[oslo_policy]
+[paste_deploy]
+[policy]
+[profiler]
+[resource]
+[revoke]
+[role]
+[saml]
+[security_compliance]
+[shadow_users]
+[signing]
+[token]
+provider = fernet
+[tokenless_auth]
+[trust]
+[unified_limit]
+EOF
+```
 
-vi /etc/keystone/keystone.conf
+Lưu ý cấu hình
 ```
 [database]
-# connection = mysql+pymysql://keystone:KEYSTONE_DBPASS@controller/keystone
 connection = mysql+pymysql://keystone:Welcome123@172.16.4.200/keystone
-
 [token]
 provider = fernet
 ```
 
-Populate the Identity service database:
+### Đồng bộ Identity service database:
 ```
 su -s /bin/sh -c "keystone-manage db_sync" keystone
 ```
 
-Initialize Fernet key repositories:
+### Khởi tạo Fernet key repositories:
 ```
 keystone-manage fernet_setup --keystone-user keystone --keystone-group keystone
 keystone-manage credential_setup --keystone-user keystone --keystone-group keystone
 ```
 
-Bootstrap the Identity service:
+### Khởi tạo Bootstrap Identity service:
 ```
 keystone-manage bootstrap --bootstrap-password Welcome123 \
   --bootstrap-admin-url http://172.16.4.200:5000/v3/ \
@@ -228,28 +434,34 @@ keystone-manage bootstrap --bootstrap-password Welcome123 \
   --bootstrap-region-id RegionOne
 ```
 
-Cấu hình Apache HTTP server
+### Cấu hình Apache HTTP server
 
 Sao lưu file /etc/httpd/conf/httpd.conf
 ```
 cp /etc/httpd/conf/httpd.conf /etc/httpd/conf/httpd.conf.bak
 ```
 
-Edit the /etc/httpd/conf/httpd.conf file and configure the ServerName option to reference the controller node:
+Chỉnh sửa `/etc/httpd/conf/httpd.conf` file
+```
+vi /etc/httpd/conf/httpd.conf
+```
+- Nội dung
 ```
 ServerName controller1
-
 ```
 
+Tạo đường dẫn
 ```
 ln -s /usr/share/keystone/wsgi-keystone.conf /etc/httpd/conf.d/
 ```
 
+Khởi động dịch vụ
 ```
 systemctl enable httpd.service
 systemctl start httpd.service
 ```
 
+Khởi tạo biên môi trường
 ```
 export OS_USERNAME=admin
 export OS_PASSWORD=Welcome123
@@ -260,40 +472,37 @@ export OS_AUTH_URL=http://172.16.4.200:35357/v3
 export OS_IDENTITY_API_VERSION=3
 ```
 
+### Tạo domain, project, user, role
 
-
-Create a domain, projects, users, and roles
-
-Although the “default” domain already exists from the keystone-manage bootstrap step in this guide, a formal way to create a new domain would be:
+Tạo new domain:
 ```
 openstack domain create --description "An Example Domain" example
 ```
 
-This guide uses a service project that contains a unique user for each service that you add to your environment. Create the service project:
+Tạo service project:
 ```
 openstack project create --domain default --description "Service Project" service
 ```
 
-
-Regular (non-admin) tasks should use an unprivileged project and user. As an example, this guide creates the demo project and user.
-- Create the demo project:
+Tạo user demo.
+- Tạo demo project:
 ```
 openstack project create --domain default --description "Demo Project" demo
 ```
-- Create the demo user:
+
+- Tạo demo user:
 ```
 openstack user create --domain default --password-prompt demo
 User Password: Welcome123
 Repeat User Password:Welcome123
-
 ```
 
-- Create the user role:
+- Tạo user role:
 ```
 openstack role create user
 ```
 
-- Add the user role to the demo project and user:
+- Thêm user role tới demo project, user:
 ```
 openstack role add --project demo --user demo user
 ```
@@ -303,21 +512,14 @@ Sao lưu file /etc/keystone/keystone-paste.ini
 cp /etc/keystone/keystone-paste.ini /etc/keystone/keystone-paste.ini.bak
 ```
 
-note khác vs tài liệu thao
-```
-[pipeline:public_api]
+### Kiểm tra hoạt động
 
-[pipeline:admin_api]
-
-[pipeline:api_v3]
-```
-## Verify operation
-Unset the temporary OS_AUTH_URL and OS_PASSWORD environment variable:
+Hủy biến môi trường OS_AUTH_URL, OS_PASSWORD environment:
 ```
 unset OS_AUTH_URL OS_PASSWORD
 ```
 
-As the admin user, request an authentication token:
+Với admin user, yêu cầu chứng thực (authentication token):
 ```
 openstack --os-auth-url http://172.16.4.200:35357/v3 \
   --os-project-domain-name Default --os-user-domain-name Default \
@@ -327,8 +529,7 @@ Password: Welcome123
 
 ```
 
-As the demo user, request an authentication token:
-
+Với demo user, yêu cầu chứng thực:
 ```
 openstack --os-auth-url http://172.16.4.200:5000/v3 \
   --os-project-domain-name Default --os-user-domain-name Default \
@@ -337,11 +538,8 @@ openstack --os-auth-url http://172.16.4.200:5000/v3 \
 Password: Welcome123
 ```
 
-Create OpenStack client environment scripts
-
-Creating the scripts
-> Create client environment scripts for the admin and demo projects and users. Future portions of this guide reference these scripts to load appropriate credentials for client operations.
-
+Tạo biến môi trường
+- Với User admin
 ```
 vi admin-openrc
 
@@ -353,8 +551,9 @@ export OS_PASSWORD=Welcome123
 export OS_AUTH_URL=http://172.16.4.200:5000/v3
 export OS_IDENTITY_API_VERSION=3
 export OS_IMAGE_API_VERSION=2
-
 ```
+
+- Với User demo
 ```
 vi demo-openrc
 
@@ -368,17 +567,16 @@ export OS_IDENTITY_API_VERSION=3
 export OS_IMAGE_API_VERSION=2
 ```
 
-## Using the scripts
-Load the admin-openrc file to populate environment variables with the location of the Identity service and the admin project and user credential
+Sử dụng script:
+- Khởi tạo môi trường dựa trên script admin-openrc
 ```
 . admin-openrc
 
 openstack token issue
 ```
 
-# Image service - Installation
-Install and configure
->  on the controller node
+## Phần 2: Cài đặt Glance - Image service
+>  Cấu hình trên `Controller`
 
 To create the database, complete these steps:
 ```
