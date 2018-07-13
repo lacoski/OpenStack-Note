@@ -32,7 +32,7 @@ Môi trường cloud theo mô hình dịch vụ Infrastructure-as-a-Service laye
 - Assignment store cho phép users và groups được gán các roles trong projects và domains.
 - Catalog lưu trữ các services của OpenStack, endpoints và regions, cho phép người dùng tìm kiếm các endpoints của services mà họ cần.
 
-## Các khải niệm trong Keystone
+## Các khái niệm trong Keystone
 ### Project
 
 Nội dung:
