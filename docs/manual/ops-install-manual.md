@@ -19,7 +19,7 @@ Các phần:
 #### Tại CONTROLLER
 Cấu hình hostname
 ```
-hostnamectl set-hostname controller
+hostnamectl set-hostname controller1
 ```
 
 Cấu hình ip tĩnh
