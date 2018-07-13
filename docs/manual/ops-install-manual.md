@@ -1781,6 +1781,301 @@ Truy cập thông qua `http://172.16.4.200/dashboard`.
 
 Mật khẩu mặc đinh `admin` hoặc `demo` user, domain `default`.
 
+## Tùy chọn: Cấu hình Self Service
+> Bổ sung cho cấu hình Provider Network
+
+Lưu ý:
+- Phải cấu hình Provider network trước
+
+
+### Bổ sung cấu hình tại Controller
+#### Cài đặt gói
+```
+yum install openstack-neutron openstack-neutron-ml2 \
+  openstack-neutron-linuxbridge ebtables
+```
+
+Chỉnh sửa `/etc/neutron/neutron.conf` 
+```
+vi /etc/neutron/neutron.conf
+```
+- Nội dung
+  ```
+  [database]
+  connection = mysql+pymysql://neutron:Welcome123@172.16.4.200/neutron
+
+  [DEFAULT]
+  core_plugin = ml2
+  service_plugins = router
+  allow_overlapping_ips = true
+  transport_url = rabbit://openstack:Welcome123@172.16.4.200
+  auth_strategy = keystone
+  notify_nova_on_port_status_changes = true
+  notify_nova_on_port_data_changes = true
+
+  [keystone_authtoken]
+  # ...
+  auth_uri = http://172.16.4.200:5000
+  auth_url = http://172.16.4.200:35357
+  memcached_servers = 172.16.4.200:11211
+  auth_type = password
+  project_domain_name = default
+  user_domain_name = default
+  project_name = service
+  username = neutron
+  password = Welcome123
+
+  [nova]
+  # ...
+  auth_url = http://172.16.4.200:35357
+  auth_type = password
+  project_domain_name = default
+  user_domain_name = default
+  region_name = RegionOne
+  project_name = service
+  username = nova
+  password = Welcome123
+
+  [oslo_concurrency]
+  # ...
+  lock_path = /var/lib/neutron/tmp
+  ```
+
+#### Cấu hình Modular Layer 2 (ML2) plug-in
+> ML2 plug-in sử dụng trong kỹ thuật Linux bridge để xây dựng build layer-2 (bridging and switching) virtual networking infrastructure cho instances.
+
+Chỉnh sửa file `/etc/neutron/plugins/ml2/ml2_conf.ini`
+```
+vi /etc/neutron/plugins/ml2/ml2_conf.ini
+```
+- Nội dung
+  ```
+  [ml2]
+  type_drivers = flat,vlan,vxlan
+  tenant_network_types = vxlan
+  mechanism_drivers = linuxbridge,l2population
+  extension_drivers = port_security
+
+  [ml2_type_flat]
+  # ...
+  flat_networks = provider
+
+  [ml2_type_vxlan]
+  # ...
+  vni_ranges = 1:1000
+
+  [securitygroup]
+  # ...
+  enable_ipset = true
+  ```
+
+#### Cấu hình Linux bridge agent
+> Linux bridge agent xây dựng layer-2 (bridging and switching) virtual networking infrastructure cho instances, xử lý các security group.
+
+Chỉnh sửa file `/etc/neutron/plugins/ml2/linuxbridge_agent.ini`
+```
+vi /etc/neutron/plugins/ml2/linuxbridge_agent.ini
+```
+- Nội dung
+  ```
+  [linux_bridge]
+  physical_interface_mappings = provider:PROVIDER_INTERFACE_NAME
+
+  # local_ip = IP HOST CONTROLLER MNGT
+  [vxlan]
+  enable_vxlan = true
+  local_ip = 172.16.4.200
+  l2_population = true
+
+  [securitygroup]
+  # ...
+  enable_security_group = true
+  firewall_driver = neutron.agent.linux.iptables_firewall.IptablesFirewallDriver
+  ```
+
+#### Cấu hình layer-3 agent
+> The Layer-3 (L3) agent provides routing and NAT services for self-service virtual networks.
+
+Chỉnh sửa `/etc/neutron/l3_agent.ini`:
+```
+vi /etc/neutron/l3_agent.ini
+```
+- Nội dung
+  ```
+  [DEFAULT]
+  # ...
+  interface_driver = linuxbridge
+  ```
+
+#### Cấu hình DHCP agent
+> Cấu hình DHCP agent cung cấp dịch vụ DHCP cho virtual networks.
+
+Chỉnh sửa `/etc/neutron/dhcp_agent.ini`
+```
+vi /etc/neutron/dhcp_agent.ini
+```
+- Nội dung
+  ```
+  [DEFAULT]
+  # ...
+  interface_driver = linuxbridge
+  dhcp_driver = neutron.agent.linux.dhcp.Dnsmasq
+  enable_isolated_metadata = true
+  ```
+
+#### Cấu hình metadata agent
+> Metadata agent cung cấp các configuration information
+
+Chỉnh sửa `/etc/neutron/metadata_agent.ini`
+```
+vi  /etc/neutron/metadata_agent.ini
+```
+- Nội dung
+  ```
+  [DEFAULT]
+  # ...
+  nova_metadata_host = 172.16.4.200
+  metadata_proxy_shared_secret = Welcome123
+  ```
+
+#### Cấu hình Compute service sửa dụng Networking service
+Chỉnh sửa `/etc/nova/nova.conf`
+```
+vi /etc/nova/nova.conf
+```
+- Nội dung
+  ```
+  [neutron]
+  # ...
+  url = http://172.16.4.200:9696
+  auth_url = http://172.16.4.200:35357
+  auth_type = password
+  project_domain_name = default
+  user_domain_name = default
+  region_name = RegionOne
+  project_name = service
+  username = neutron
+  password = Welcome123
+  service_metadata_proxy = true
+  metadata_proxy_shared_secret = Welcome123
+  ```
+
+#### Khởi tạo dịch vụ
+
+Networking service initialization scripts cần symbolic link `/etc/neutron/plugin.ini` trỏ tới ML2 plug-in configuration file `/etc/neutron/plugins/ml2/ml2_conf.ini`. Nếu đường dẫn chưa tồn tại cần tạo:
+> Lưu ý: Bước này đã thực hiện ở cấu hình tạo provider
+```
+ln -s /etc/neutron/plugins/ml2/ml2_conf.ini /etc/neutron/plugin.ini
+```
+
+Đồng bộ database:
+```
+su -s /bin/sh -c "neutron-db-manage --config-file /etc/neutron/neutron.conf \
+  --config-file /etc/neutron/plugins/ml2/ml2_conf.ini upgrade head" neutron
+```
+
+Khởi tạo lại Compute API service:
+```
+systemctl restart openstack-nova-api.service
+```
+
+Khởi tạo Networking services và cập nhật cấu hình mới
+```
+systemctl restart neutron-server.service \
+  neutron-linuxbridge-agent.service neutron-dhcp-agent.service \
+  neutron-metadata-agent.service
+
+systemctl enable neutron-l3-agent.service
+systemctl restart neutron-l3-agent.service
+```
+
+### Bổ sung cấu hình trên compute node.
+> Thực hiện trên các node compute
+
+#### Cấu hình Linux bridge agent
+> Linux bridge agent xây dựng layer-2 (bridging and switching) virtual networking infrastructure cho các instance và xử lý các security group.
+
+Chỉnh sửa `/etc/neutron/plugins/ml2/linuxbridge_agent.ini`
+```
+vi /etc/neutron/plugins/ml2/linuxbridge_agent.ini
+```
+- Nội dung
+  ```
+  [linux_bridge]
+  physical_interface_mappings = provider:ens224
+
+  # local_ip = IP MNGT COMPUTE NODE
+  [vxlan]
+  enable_vxlan = true
+  local_ip = 172.16.4.201
+  l2_population = true
+
+  [securitygroup]
+  # ...
+  enable_security_group = true
+  firewall_driver = neutron.agent.linux.iptables_firewall.IptablesFirewallDriver
+  ```
+
+#### Cấu hình Compute service sử dụng Networking service
+Cấu hình file `/etc/nova/nova.conf`:
+```
+vi /etc/nova/nova.conf
+```
+- Nội dung
+  ```
+  [neutron]
+  ...
+  url = http://172.16.4.200:9696
+  auth_url = http://172.16.4.200:35357
+  auth_type = password
+  project_domain_name = default
+  user_domain_name = default
+  region_name = RegionOne
+  project_name = service
+  username = neutron
+  password = Welcome123
+  ```
+
+#### Khởi tạo lại dịch vụ
+
+Khởi động lại Compute service:
+```
+systemctl restart openstack-nova-compute.service
+```
+
+Khởi động lại Linux bridge agent:
+```
+systemctl restart neutron-linuxbridge-agent.service
+```
+
+### Chỉnh lại lại cấu hình Horizon
+> Tại node controller 
+
+Chỉnh sửa `/etc/openstack-dashboard/local_settings`
+```
+vi /etc/openstack-dashboard/local_settings
+```
+- Nội dung
+  ```
+  OPENSTACK_NEUTRON_NETWORK = {
+      ...
+      'enable_router': True,
+      'enable_quotas': True,
+      'enable_ipv6': False,
+      'enable_distributed_router': True,
+      'enable_ha_router': True,
+      'enable_lb': True,
+      'enable_firewall': False,
+      'enable_vpn': False,
+      'enable_fip_topology_check': False,
+  }
+  ```
+
+Khởi động lại dịch vụ
+```
+systemctl restart httpd.service memcached.service
+```
+
 # Nguồn
 
 https://docs.openstack.org/install-guide/index.html
