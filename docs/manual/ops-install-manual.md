@@ -540,40 +540,40 @@ Password: Welcome123
 
 Tạo biến môi trường
 - Với User admin
-```
-vi admin-openrc
+  ```
+  vi admin-openrc
 
-export OS_PROJECT_DOMAIN_NAME=Default
-export OS_USER_DOMAIN_NAME=Default
-export OS_PROJECT_NAME=admin
-export OS_USERNAME=admin
-export OS_PASSWORD=Welcome123
-export OS_AUTH_URL=http://172.16.4.200:5000/v3
-export OS_IDENTITY_API_VERSION=3
-export OS_IMAGE_API_VERSION=2
-```
+  export OS_PROJECT_DOMAIN_NAME=Default
+  export OS_USER_DOMAIN_NAME=Default
+  export OS_PROJECT_NAME=admin
+  export OS_USERNAME=admin
+  export OS_PASSWORD=Welcome123
+  export OS_AUTH_URL=http://172.16.4.200:5000/v3
+  export OS_IDENTITY_API_VERSION=3
+  export OS_IMAGE_API_VERSION=2
+  ```
 
 - Với User demo
-```
-vi demo-openrc
+  ```
+  vi demo-openrc
 
-export OS_PROJECT_DOMAIN_NAME=Default
-export OS_USER_DOMAIN_NAME=Default
-export OS_PROJECT_NAME=demo
-export OS_USERNAME=demo
-export OS_PASSWORD=Welcome123
-export OS_AUTH_URL=http://172.16.4.200:5000/v3
-export OS_IDENTITY_API_VERSION=3
-export OS_IMAGE_API_VERSION=2
-```
+  export OS_PROJECT_DOMAIN_NAME=Default
+  export OS_USER_DOMAIN_NAME=Default
+  export OS_PROJECT_NAME=demo
+  export OS_USERNAME=demo
+  export OS_PASSWORD=Welcome123
+  export OS_AUTH_URL=http://172.16.4.200:5000/v3
+  export OS_IDENTITY_API_VERSION=3
+  export OS_IMAGE_API_VERSION=2
+  ```
 
 Sử dụng script:
 - Khởi tạo môi trường dựa trên script admin-openrc
-```
-. admin-openrc
+  ```
+  . admin-openrc
 
-openstack token issue
-```
+  openstack token issue
+  ```
 
 ## Phần 2: Cài đặt Glance - Image service
 >  Cấu hình trên `Controller`
