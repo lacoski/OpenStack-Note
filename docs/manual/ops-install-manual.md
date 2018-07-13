@@ -19,7 +19,7 @@ Các phần:
 #### Tại CONTROLLER
 Cấu hình hostname
 ```
-hostnamectl set-hostname controller1
+hostnamectl set-hostname controller1  
 ```
 
 Cấu hình ip tĩnh
@@ -194,7 +194,11 @@ Chạy, thiết lạp service
 systemctl enable chronyd.service
 systemctl start chronyd.service
 ```
+
+Đồng bộ thời gian
+```
 chronyc sources
+```
 ### Tại compute
 Cài đặt gói
 ```
