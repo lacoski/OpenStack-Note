@@ -198,7 +198,7 @@ systemctl start chronyd.service
 Đồng bộ thời gian
 ```
 chronyc sources
-```
+``` 
 ### Tại compute
 Cài đặt gói
 ```
@@ -610,7 +610,6 @@ Sử dụng script:
 Tạo database cua Glance:
 ```
 mysql -u root -pWelcome123 
-Enter password:  Welcome123
 CREATE DATABASE glance;
 GRANT ALL PRIVILEGES ON glance.* TO 'glance'@'localhost' IDENTIFIED BY 'Welcome123';
 GRANT ALL PRIVILEGES ON glance.* TO 'glance'@'%' IDENTIFIED BY 'Welcome123';
@@ -1287,18 +1286,22 @@ cp /etc/neutron/plugins/ml2/ml2_conf.ini /etc/neutron/plugins/ml2/ml2_conf.ini.b
 
 Cấu hình file `/etc/neutron/plugins/ml2/ml2_conf.ini`:
 ```
-[ml2]
-type_drivers = flat,vlan
-tenant_network_types = 
-mechanism_drivers = linuxbridge
-extension_drivers = port_security
-
-[ml2_type_flat]
-flat_networks = provider
-
-[securitygroup]
-enable_ipset = true
+vi /etc/neutron/plugins/ml2/ml2_conf.ini
 ```
+- Nội dung
+  ```
+  [ml2]
+  type_drivers = flat,vlan
+  tenant_network_types = 
+  mechanism_drivers = linuxbridge
+  extension_drivers = port_security
+
+  [ml2_type_flat]
+  flat_networks = provider
+
+  [securitygroup]
+  enable_ipset = true
+  ```
 
 Cấu hình Linux bridge agent
 > Linux bridge agent xây dựng layer-2 (bridging and switching) virtual networking infrastructure cho instances xử lý các security group.
@@ -1627,6 +1630,8 @@ Tạo chứng chỉ user:
 - Tạo cinder user:
   ```
   openstack user create --domain default --password-prompt cinder
+  User Password:
+  Repeat User Password:
   ```
 - Tạo admin role cho cinder user:
   ```
@@ -1772,7 +1777,7 @@ systemctl restart httpd.service memcached.service
 
 #### Truy cập Dashboard.
 
-Truy cập thông qua `http://controller/dashboard`.
+Truy cập thông qua `http://172.16.4.200/dashboard`.
 
 Mật khẩu mặc đinh `admin` hoặc `demo` user, domain `default`.
 
