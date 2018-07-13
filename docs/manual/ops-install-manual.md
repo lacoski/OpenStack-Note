@@ -613,7 +613,7 @@ Khởi tạo biến môi trường Admin
 . admin-openrc
 ```
 
-Tại thông tin xác thực:
+Tạo thông tin xác thực:
 - Tạo Glance User:
   ```
   openstack user create --domain default --password-prompt glance
@@ -1506,6 +1506,8 @@ systemctl start neutron-linuxbridge-agent.service
 ```
 
 ## Phần 5: Cài đặt Cinder service
+Lưu ý:
+- Với bài, Storage node và Controller là 1, nên cấu hình 2 thành phần sẽ chồng lên nhau
 
 ### Cài đặt storage node
 > Cấu hình trên controller (yêu cầu 2 ổ, 1 cho cinder volume) 
