@@ -1,5 +1,11 @@
 # Cài đặt OpenStack manual (Queen)
 ---
+## Sơ đồ, quy hoạch tài nguyên
+### Sơ đồ
+![](images/ops-manual-1.PNG)
+### Quy hoạch tài nguyên
+![](images/ops-manual-2.PNG)
+
 ## Phần 1: Chuẩn bị các node
 Các phần:
 - Cấu hình Hostname, static interface
