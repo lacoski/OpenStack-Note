@@ -1046,7 +1046,7 @@ egrep -c '(vmx|svm)' /proc/cpuinfo
   [libvirt]
   # ...
   virt_type = qemu
-```
+  ```
 
 Chạy dịch vụ Compute:
 ```
