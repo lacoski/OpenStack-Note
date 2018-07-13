@@ -1540,3 +1540,211 @@ Start the Block Storage services and configure them to start when the system boo
 systemctl enable openstack-cinder-api.service openstack-cinder-scheduler.service
 systemctl start openstack-cinder-api.service openstack-cinder-scheduler.service
 ```
+
+
+# Sefl service
+## Controller config
+Install the components
+```
+yum install openstack-neutron openstack-neutron-ml2 \
+  openstack-neutron-linuxbridge ebtables
+
+```
+
+Edit the /etc/neutron/neutron.conf 
+```
+[database]
+# ...
+connection = mysql+pymysql://neutron:Welcome123@172.16.4.200/neutron
+
+[DEFAULT]
+# ...
+core_plugin = ml2
+service_plugins = router
+allow_overlapping_ips = true
+transport_url = rabbit://openstack:Welcome123@172.16.4.200
+auth_strategy = keystone
+notify_nova_on_port_status_changes = true
+notify_nova_on_port_data_changes = true
+
+[keystone_authtoken]
+# ...
+auth_uri = http://172.16.4.200:5000
+auth_url = http://172.16.4.200:35357
+memcached_servers = 172.16.4.200:11211
+auth_type = password
+project_domain_name = default
+user_domain_name = default
+project_name = service
+username = neutron
+password = Welcome123
+
+
+
+[nova]
+# ...
+auth_url = http://172.16.4.200:35357
+auth_type = password
+project_domain_name = default
+user_domain_name = default
+region_name = RegionOne
+project_name = service
+username = nova
+password = Welcome123
+
+[oslo_concurrency]
+# ...
+lock_path = /var/lib/neutron/tmp
+```
+
+Configure the Modular Layer 2 (ML2) plug-in
+> The ML2 plug-in uses the Linux bridge mechanism to build layer-2 (bridging and switching) virtual networking infrastructure for instances.
+
+Edit the `/etc/neutron/plugins/ml2/ml2_conf.ini`
+```
+[ml2]
+type_drivers = flat,vlan,vxlan
+tenant_network_types = vxlan
+mechanism_drivers = linuxbridge,l2population
+extension_drivers = port_security
+
+[ml2_type_flat]
+# ...
+flat_networks = provider
+
+[ml2_type_vxlan]
+# ...
+vni_ranges = 1:1000
+
+[securitygroup]
+# ...
+enable_ipset = true
+```
+
+Configure the Linux bridge agent¶
+> The Linux bridge agent builds layer-2 (bridging and switching) virtual networking infrastructure for instances and handles security groups.
+
+Edit the `/etc/neutron/plugins/ml2/linuxbridge_agent.ini`
+```
+[linux_bridge]
+physical_interface_mappings = provider:PROVIDER_INTERFACE_NAME
+
+# local_ip = IP HOST CONTROLLER 
+
+# Therefore, replace OVERLAY_INTERFACE_IP_ADDRESS with the management IP address of the controller node.
+[vxlan]
+enable_vxlan = true
+local_ip = 172.16.4.200
+l2_population = true
+
+[securitygroup]
+# ...
+enable_security_group = true
+firewall_driver = neutron.agent.linux.iptables_firewall.IptablesFirewallDriver
+```
+
+Configure the layer-3 agent
+> The Layer-3 (L3) agent provides routing and NAT services for self-service virtual networks.
+
+Edit the /etc/neutron/l3_agent.ini:
+```
+[DEFAULT]
+# ...
+interface_driver = linuxbridge
+```
+
+Configure the DHCP agent¶
+> The DHCP agent provides DHCP services for virtual networks.
+
+Edit the `/etc/neutron/dhcp_agent.ini`
+```
+[DEFAULT]
+# ...
+interface_driver = linuxbridge
+dhcp_driver = neutron.agent.linux.dhcp.Dnsmasq
+enable_isolated_metadata = true
+```
+
+Configure the metadata agent
+> The metadata agent provides configuration information such as credentials to instances.
+Edit the `/etc/neutron/metadata_agent.ini`
+```
+[DEFAULT]
+# ...
+nova_metadata_host = 172.16.4.200
+metadata_proxy_shared_secret = Welcome123
+```
+
+> Configure the Compute service to use the Networking service¶
+Edit the /etc/nova/nova.conf
+```
+[neutron]
+# ...
+url = http://172.16.4.200:9696
+auth_url = http://172.16.4.200:35357
+auth_type = password
+project_domain_name = default
+user_domain_name = default
+region_name = RegionOne
+project_name = service
+username = neutron
+password = Welcome123
+service_metadata_proxy = true
+metadata_proxy_shared_secret = Welcome123
+```
+
+Finalize installation
+
+The Networking service initialization scripts expect a symbolic link /etc/neutron/plugin.ini pointing to the ML2 plug-in configuration file, /etc/neutron/plugins/ml2/ml2_conf.ini. If this symbolic link does not exist, create it using the following command:
+```
+ln -s /etc/neutron/plugins/ml2/ml2_conf.ini /etc/neutron/plugin.ini
+```
+
+Populate the database:
+```
+su -s /bin/sh -c "neutron-db-manage --config-file /etc/neutron/neutron.conf \
+  --config-file /etc/neutron/plugins/ml2/ml2_conf.ini upgrade head" neutron
+```
+
+Restart the Compute API service:
+```
+systemctl restart openstack-nova-api.service
+```
+
+Start the Networking services and configure them to start when the system boots.
+```
+systemctl restart neutron-server.service \
+  neutron-linuxbridge-agent.service neutron-dhcp-agent.service \
+  neutron-metadata-agent.service
+
+systemctl enable neutron-l3-agent.service
+systemctl restart neutron-l3-agent.service
+```
+
+## Configure the Networking components on a compute node.
+> Đã cài provider
+
+> The Linux bridge agent builds layer-2 (bridging and switching) virtual networking infrastructure for instances and handles security groups.
+
+Edit the `/etc/neutron/plugins/ml2/linuxbridge_agent.ini`
+```
+[linux_bridge]
+physical_interface_mappings = provider:ens224
+
+# local_ip = IP MNGT COMPUTE NODE
+[vxlan]
+enable_vxlan = true
+local_ip = 172.16.4.201
+l2_population = true
+
+[securitygroup]
+# ...
+enable_security_group = true
+firewall_driver = neutron.agent.linux.iptables_firewall.IptablesFirewallDriver
+```
+
+Finalize installation
+```
+systemctl restart openstack-nova-compute.service
+systemctl restart neutron-linuxbridge-agent.service
+```
