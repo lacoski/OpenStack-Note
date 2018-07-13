@@ -1032,7 +1032,7 @@ vi /etc/nova/nova.conf
   auth_url = http://172.16.4.200:5000/v3
   username = placement
   password = Welcome123
-```
+  ```
 
 #### Khởi tạo dịch vụ
 Kiểm tra loại ảo hóa của phần cứng
