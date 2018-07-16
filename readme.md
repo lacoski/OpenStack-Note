@@ -6,8 +6,8 @@ Ghi chép cho tôi về OpenStack
 ### [1. Tổng quan về OpenStack](docs/openstack-overview.md)
 
 ## Cài đặt OPENSTACK 
-### 1. Cài đặt PackStack Queen (đang viết) 
-### [2. Cài đặt Openstack Queen manual](docs/manual/ops-install-manual.md   )
+### [1. Cài đặt PackStack Queen](docs/manual/packstack/queens.md) 
+### [2. Cài đặt Openstack Queen manual](docs/manual/ops-install-manual.md)
 
 
 ## Neutron
