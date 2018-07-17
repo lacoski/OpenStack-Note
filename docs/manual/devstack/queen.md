@@ -47,6 +47,12 @@ FIXED_NETWORK_SIZE=256
 # FLAT_INTERFACE = ip gan voi local
 FLAT_INTERFACE=ens33
 
+DEST=$HOME/stack 
+SERVICE_DIR=$DEST/status 
+DATA_DIR=$DEST/data 
+LOGFILE=$DEST/logs/stack.sh.log 
+LOGDIR=$DEST/logs
+
 ```
 
 
