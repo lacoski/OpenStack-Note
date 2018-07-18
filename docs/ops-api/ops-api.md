@@ -546,3 +546,4 @@ https://github.com/hocchudong/API-Openstack
 
 https://www.codehub.vn/RESTful-API-Cho-Nguoi-Bat-Dau
 
+https://developer.openstack.org/api-guide/quick-start/
