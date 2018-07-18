@@ -55,7 +55,7 @@ Lưu ý: Trong OpenStack có khái niệm `scope` hay còn gọi là phạm vi �
 - Bản chất mỗi token được cấp sẽ có quyền khác nhau khi làm việc với các project khác nhau
 
 Unscoped token:
-- Token chứa có quyền sử dụng bất kỳ catalog, role, project, hoặc domain. Sử dụng token này đơn giản để chứng thực danh tính tại KeyStone tại 1 số thời điểm.
+- Token không có quyền sử dụng bất kỳ catalog, role, project, hoặc domain. Sử dụng token này đơn giản để chứng thực danh tính tại KeyStone tại 1 số thời điểm.
 
 > Xem thêm vd docs bên dưới
 
@@ -69,16 +69,393 @@ Domain-scoped token:
 - Token cho quyền thực hiện hành động trên domain chỉ định. 
 - Mỗi domain thường bao gồm nhiều project và user
 
-### Bước 1: Tạo chứng thực
+# Sử dụng API OPENSTACK
+
+Danh sách API OPS:
+
+http://172.16.4.200/dashboard/project/api_access/
+
+pic 2
+
+## Phần 1: Làm việc với Identity API v3 service
 > Tìm hiểu thêm cơ chế làm việc với KeyStone theo docs 
 
-
-- Làm việc với images
-- Làm việc với network 
-- Làm việc với flavor
+### Cơ bản về dịch vụ Identity
 
 
+Dịch vụ Identity service sử dụng để sinh token. Token tượng trưng cho chứng thực định danh user, tổ chức, quyền hạn trên các project, domain và hệ thống
 
+
+Có 2 phương thức chứng thực:
+- Password
+- Token
+
+Trong các token sẽ chứa:
+- Credential (Thông tin xác thực)
+- Authorization scope (Phạm vi quyền hạn)
+
+Token trả lại bao gồm:
+- Token IDs và giá trị X-Subject-Token tại header response
+
+Sau khi có token ta có thể:
+- Tạo các REST API tới các dịch vụ OpenStack khác.
+- Cần khai báo giá trị `X-Auth-Token` tại request header
+- Validate token, liệt kê danh sách các domain, project, role, endpoint token cho phép truy cập
+- Thu hồi token
+
+pic 1
+
+### Chứng thực password dạng unscoped authorization
+> POST: /v3/auth/tokens
+
+Lưu ý:
+- Token dạng unscoped, tức Token không có quyền sử dụng bất kỳ catalog, role, project, hoặc domain. Sử dụng token này đơn giản để chứng thực danh tính tại KeyStone tại 1 số thời điểm.
+- Phương thức chứng thực dạng password, user cần khai báo id or name, password
+
+Body request raw dạng json
+```
+{
+    "auth": {
+        "identity": {
+            "methods": [
+                "password"
+            ],
+            "password": {
+                "user": {
+                    "name": "admin",
+                    "domain": {
+                        "name": "Default"
+                    },
+                    "password": "devstacker"
+                }
+            }
+        }
+    }
+}
+```
+
+VD:
+
+pic 3
+
+KQ:
+
+pic 4
+
+pic 5
+
+
+### Chứng thực password dạng scoped authorization
+> POST: /v3/auth/tokens
+
+Lưu ý:
+- Phương thức chứng thực cho phép truy cập các project, domain, system
+- Request body cần bao gồm pasword, thêm các thông tin về project, domain, system
+
+Các loại chứng thực cơ bản:
+- Chứng thực system scoped
+ ```
+ {
+    "auth": {
+        "identity": {
+            "methods": [
+                "password"
+            ],
+            "password": {
+                "user": {
+                    "id": "ee4dfb6e5540447cb3741905149d9b6e",
+                    "password": "devstacker"
+                }
+            }
+        },
+        "scope": {
+            "system": {
+                "all": true
+            }
+        }
+    }
+ }
+ ```
+- Chứng thực Domain-Scoped
+ ```
+ {
+    "auth": {
+        "identity": {
+            "methods": [
+                "password"
+            ],
+            "password": {
+                "user": {
+                    "id": "ee4dfb6e5540447cb3741905149d9b6e",
+                    "password": "devstacker"
+                }
+            }
+        },
+        "scope": {
+            "domain": {
+                "id": "default"
+            }
+        }
+    }
+ }
+ ```
+- Chứng thực Project-Scoped
+ ```
+ {
+    "auth": {
+        "identity": {
+            "methods": [
+                "password"
+            ],
+            "password": {
+                "user": {
+                    "id": "ee4dfb6e5540447cb3741905149d9b6e",
+                    "password": "devstacker"
+                }
+            }
+        },
+        "scope": {
+            "project": {
+                "id": "a6944d763bf64ee6a275f1263fae0352"
+            }
+        }
+    }
+ }
+ ```
+VD:
+pic 6 7 8  
+
+### Chứng thực token dạng unscoped authorization
+> POST: /v3/auth/tokens
+
+Lưu ý:
+- Token dạng unscoped, tức Token không có quyền sử dụng bất kỳ catalog, role, project, hoặc domain. Sử dụng token này đơn giản để chứng thực danh tính tại KeyStone tại 1 số thời điểm.
+- Phương thức chứng thực dạng password, user cần khai báo id or name, password
+
+Body request
+```
+{
+"auth": {
+    "identity": {
+        "methods": [
+            "token"
+        ],
+        "token": {
+            "id": "'$OS_TOKEN'"
+        }
+    }
+}
+}
+```
+VD:
+
+pic 9 10 11
+
+### Chứng thực token dạng scoped authorization
+> POST: /v3/auth/tokens
+
+Lưu ý:
+- Phương thức chứng thực cho phép truy cập các project, domain, system
+- Request body cần bao gồm pasword, thêm các thông tin về project, domain, system
+
+- Chứng thực dạng System-Scoped
+ ```
+ {
+    "auth": {
+        "identity": {
+            "methods": [
+                "token"
+            ],
+            "token": {
+                "id": "'$OS_TOKEN'"
+            }
+        },
+        "scope": {
+            "system": {
+                "all": true
+            }
+        }
+    }
+ }
+ ```
+- Chứng thực dạng Domain-Scoped 
+ ```
+ {
+    "auth": {
+        "identity": {
+            "methods": [
+                "token"
+            ],
+            "token": {
+                "id": "'$OS_TOKEN'"
+            }
+        },
+        "scope": {
+            "domain": {
+                "id": "default"
+            }
+        }
+    }
+ }
+ ```
+- Chứng thực dạng Project-Scoped
+ ```
+ {
+    "auth": {
+        "identity": {
+            "methods": [
+                "token"
+            ],
+            "token": {
+                "id": "'$OS_TOKEN'"
+            }
+        },
+        "scope": {
+            "project": {
+                "domain": {
+                    "id": "default"
+                },
+                "name": "admin"
+            }
+        }
+    }
+ }
+ ```
+VD:
+
+pic 12 13 14
+
+### Chứng thực token và show thông tin token
+> GET: /v3/auth/tokens
+
+Trả lại thông tin các token
+
+Lưu ý: Cần 2 tham số
+- Cần tham số X-Auth-Token: Token hiện tại
+- Cần tham số X-Subject-Token: Token cần chứng thực
+
+pic 15 16 17
+
+### Kiểm tra token 
+> HEAD /v3/auth/tokens
+
+Kiểm tra token giống chứng thực nhưng không có kết quả trả về.
+
+Yêu cầu 2 tham số:
+- Cần tham số X-Auth-Token: Token hiện tại
+- Cần tham số X-Subject-Token: Token cần kiểm tra
+
+pic 18 19
+
+### Thu hồi token
+> DELETE: /v3/auth/tokens
+
+Giống chứng thực, nhưng mục đích là thu hồi token
+
+pic 20 21
+
+### Lấy catalog service được sử dụng
+> Lưu ý sử dụng token dạng scoped như project scoped
+
+VD:
+pic 22 23
+
+
+### Lấy project có thể sử dụng
+> Lưu ý sử dụng token dạng scoped như project scoped
+
+pic 24, 25
+
+
+### Lưu ý
+```
+Sau khi có token (X-Auth-Token) trong header request, user có thể tương tác với các project, service khác trong ops theo scoped user
+```
+
+### Liệt các các service có thể sử dụng
+
+pic 26, 27
+
+## Phần 2: Làm với image service
+> Làm việc với project glance
+
+> Yêu cầu đã chứng thực scoped token với quyền trên system, hoặc project. X-Auth-Token trên header
+
+### Liệt kê danh sách các image
+> GET: /v2/images
+
+> Yêu cầu X-Auth-Token tại header
+
+pic 28 29
+
+### Xem thông tin chi tiết image
+> GET: /v2/images/{image_id}
+
+pic 30 31
+
+### Delete Image
+
+pic 32 33
+
+### Cách tạo Image bằng API OPS
+Cần 2 bước để tạo Image:
+- Tạo Image trống chưa có file data (Sau khi tạo status dạng queue)
+- Upload file data (Sau khi upload image status chuyển sang dạng active)
+
+Tạo khung image:
+- Cần X-Auth-Token tại header
+- Trong body request cần tham số
+ - "container_format"
+ - "disk_format"
+ - "name"
+
+pic 34 35
+
+Upload image:
+
+pic 36 37
+
+
+## Phần 3: Làm với network api
+> Làm việc với project neutron
+
+> Yêu cầu đã chứng thực scoped token với quyền trên system, hoặc project. X-Auth-Token trên header
+
+
+### Lấy danh sách network
+
+pic 38 39
+
+### Xem chi tiết network
+
+pic 40 41
+
+### Xóa network
+
+pic 42 43
+
+### Tạo network
+
+pic 44 45
+
+### Lấy danh sách subnet
+
+pic 46 47
+
+### Xem chi tiết subnet
+
+pic 48 49
+
+### Tạo subnet mới
+
+pic 50 51
+
+### Xóa subnet
+
+pic 52 53
+
+----
+- Làm việc với flavor, tạo vm
 # Nguồn
 
 https://github.com/hocchudong/API-Openstack
