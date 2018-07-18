@@ -9,7 +9,6 @@ Ghi chép cho tôi về OpenStack
 ### [1. Cài đặt PackStack Queen](docs/manual/packstack/queens.md) 
 ### [2. Cài đặt Openstack Queen manual](docs/manual/ops-install-manual.md)
 
-
 ## Neutron
 ### [1. Tổng quan về Neutron](docs/neutron/network-ops-overview.md)
 
@@ -24,3 +23,6 @@ Ghi chép cho tôi về OpenStack
 
 ## Cinder
 ### [1. Tổng quan về Cinder](docs/cinder/cinder-overview.md)
+
+## API OpenStack
+### [1. Sử dụng API OPENSTACK](docs/ops-api/ops-api.md)

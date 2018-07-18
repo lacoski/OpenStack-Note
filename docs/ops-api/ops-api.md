@@ -75,7 +75,7 @@ Danh sách API OPS:
 
 http://172.16.4.200/dashboard/project/api_access/
 
-pic 2
+![](images/api-ops-2.PNG)
 
 ## Phần 1: Làm việc với Identity API v3 service
 > Tìm hiểu thêm cơ chế làm việc với KeyStone theo docs 
@@ -103,7 +103,7 @@ Sau khi có token ta có thể:
 - Validate token, liệt kê danh sách các domain, project, role, endpoint token cho phép truy cập
 - Thu hồi token
 
-pic 1
+![](images/api-ops-1.PNG)
 
 ### Chứng thực password dạng unscoped authorization
 > POST: /v3/auth/tokens
@@ -136,13 +136,13 @@ Body request raw dạng json
 
 VD:
 
-pic 3
+![](images/api-ops-3.PNG)
 
 KQ:
 
-pic 4
+![](images/api-ops-4.PNG)
 
-pic 5
+![](images/api-ops-5.PNG)
 
 
 ### Chứng thực password dạng scoped authorization
@@ -223,7 +223,10 @@ Các loại chứng thực cơ bản:
  }
  ```
 VD:
-pic 6 7 8  
+![](images/api-ops-6.PNG)
+![](images/api-ops-7.PNG)
+![](images/api-ops-8.PNG)
+
 
 ### Chứng thực token dạng unscoped authorization
 > POST: /v3/auth/tokens
@@ -249,7 +252,9 @@ Body request
 ```
 VD:
 
-pic 9 10 11
+![](images/api-ops-9.PNG)
+![](images/api-ops-10.PNG)
+![](images/api-ops-11.PNG)
 
 ### Chứng thực token dạng scoped authorization
 > POST: /v3/auth/tokens
@@ -323,7 +328,10 @@ Lưu ý:
  ```
 VD:
 
-pic 12 13 14
+![](images/api-ops-12.PNG)
+![](images/api-ops-13.PNG)
+![](images/api-ops-14.PNG)
+
 
 ### Chứng thực token và show thông tin token
 > GET: /v3/auth/tokens
@@ -334,7 +342,9 @@ Lưu ý: Cần 2 tham số
 - Cần tham số X-Auth-Token: Token hiện tại
 - Cần tham số X-Subject-Token: Token cần chứng thực
 
-pic 15 16 17
+![](images/api-ops-15.PNG)
+![](images/api-ops-16.PNG)
+![](images/api-ops-17.PNG)
 
 ### Kiểm tra token 
 > HEAD /v3/auth/tokens
@@ -345,26 +355,34 @@ Yêu cầu 2 tham số:
 - Cần tham số X-Auth-Token: Token hiện tại
 - Cần tham số X-Subject-Token: Token cần kiểm tra
 
-pic 18 19
+![](images/api-ops-18.PNG)
+![](images/api-ops-19.PNG)
 
 ### Thu hồi token
 > DELETE: /v3/auth/tokens
 
 Giống chứng thực, nhưng mục đích là thu hồi token
 
-pic 20 21
+![](images/api-ops-20.PNG)
+![](images/api-ops-21.PNG)
 
 ### Lấy catalog service được sử dụng
+> GET: /v3/auth/catalog
+
 > Lưu ý sử dụng token dạng scoped như project scoped
 
 VD:
-pic 22 23
+![](images/api-ops-22.PNG)
+![](images/api-ops-23.PNG)
 
 
 ### Lấy project có thể sử dụng
+> GET: /v3/auth/projects
+
 > Lưu ý sử dụng token dạng scoped như project scoped
 
-pic 24, 25
+![](images/api-ops-24.PNG)
+![](images/api-ops-25.PNG)
 
 
 ### Lưu ý
@@ -373,8 +391,11 @@ Sau khi có token (X-Auth-Token) trong header request, user có thể tương t�
 ```
 
 ### Liệt các các service có thể sử dụng
+> GET: /v3/services
 
-pic 26, 27
+![](images/api-ops-26.PNG)
+![](images/api-ops-27.PNG)
+
 
 ## Phần 2: Làm với image service
 > Làm việc với project glance
@@ -386,21 +407,28 @@ pic 26, 27
 
 > Yêu cầu X-Auth-Token tại header
 
-pic 28 29
+![](images/api-ops-28.PNG)
+![](images/api-ops-29.PNG)
 
 ### Xem thông tin chi tiết image
 > GET: /v2/images/{image_id}
 
-pic 30 31
+![](images/api-ops-30.PNG)
+![](images/api-ops-31.PNG)
+
 
 ### Delete Image
+> DELETE: /v2/images/{image_id}
 
-pic 32 33
+![](images/api-ops-32.PNG)
+![](images/api-ops-33.PNG)
 
 ### Cách tạo Image bằng API OPS
 Cần 2 bước để tạo Image:
 - Tạo Image trống chưa có file data (Sau khi tạo status dạng queue)
 - Upload file data (Sau khi upload image status chuyển sang dạng active)
+
+> POST: /v2/images
 
 Tạo khung image:
 - Cần X-Auth-Token tại header
@@ -409,12 +437,15 @@ Tạo khung image:
  - "disk_format"
  - "name"
 
-pic 34 35
+![](images/api-ops-34.PNG)
+![](images/api-ops-35.PNG)
+
+> PUT: /v2/images/{image_id}/file
 
 Upload image:
 
-pic 36 37
-
+![](images/api-ops-36.PNG)
+![](images/api-ops-37.PNG)
 
 ## Phần 3: Làm với network api
 > Làm việc với project neutron
@@ -423,39 +454,92 @@ pic 36 37
 
 
 ### Lấy danh sách network
+> GET: /v2.0/networks
 
-pic 38 39
+![](images/api-ops-38.PNG)
+![](images/api-ops-39.PNG)
 
 ### Xem chi tiết network
+> GET: /v2.0/networks/{network_id}
 
-pic 40 41
+![](images/api-ops-40.PNG)
+![](images/api-ops-41.PNG)
 
 ### Xóa network
+> DELETE: /v2.0/networks/{network_id}
 
-pic 42 43
+![](images/api-ops-42.PNG)
+![](images/api-ops-43.PNG)
 
 ### Tạo network
+> POST: /v2.0/networks
 
-pic 44 45
+![](images/api-ops-44.PNG)
+![](images/api-ops-45.PNG)
 
 ### Lấy danh sách subnet
+> GET: /v2.0/subnets
 
-pic 46 47
+![](images/api-ops-46.PNG)
+![](images/api-ops-47.PNG)
 
 ### Xem chi tiết subnet
+> GET: /v2.0/subnets/{subnet_id}
 
-pic 48 49
+![](images/api-ops-48.PNG)
+![](images/api-ops-49.PNG)
 
 ### Tạo subnet mới
+> POST: /v2.0/subnets
 
-pic 50 51
+![](images/api-ops-50.PNG)
+![](images/api-ops-51.PNG)
 
 ### Xóa subnet
+> DELETE: /v2.0/subnets/{subnet_id}
 
-pic 52 53
+![](images/api-ops-52.PNG)
+![](images/api-ops-53.PNG)
 
-----
-- Làm việc với flavor, tạo vm
+## Phần 4: Làm việc với compute API
+> Làm việc với project nova
+
+> Yêu cầu đã chứng thực scoped token với quyền trên system, hoặc project. X-Auth-Token trên header
+
+### Liệt kê list flavor
+
+![](images/api-ops-58.PNG)
+![](images/api-ops-59.PNG)
+
+### Liệt kê các VM đang chạy
+> GET: /servers
+
+![](images/api-ops-54.PNG)
+![](images/api-ops-55.PNG)
+
+### Tạo server
+> POST: /servers
+
+Body Json
+```
+{
+    "server": {
+        "name": "create-vm",
+        "imageRef": "<id>",
+        "flavorRef": "<id>",
+        "networks" : [{
+            "uuid" : "<id>"            
+        }],
+    }
+}
+```
+
+![](images/api-ops-56.PNG)
+![](images/api-ops-57.PNG)
+
+> Tìm hiểu thêm theo API DOCS: https://developer.openstack.org/api-ref/compute/#create-server
+
+
 # Nguồn
 
 https://github.com/hocchudong/API-Openstack
