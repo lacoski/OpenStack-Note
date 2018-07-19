@@ -61,7 +61,7 @@ Nhược điểm:
 
 > Lưu giữ các thông tin Token ID, Expiration, Valid, User ID, Extra vào backend.
 
-pic 1
+![](images/token-format-1.png)
 
 ### UUID Token Validation Workflow 
 - Bước 1: Xác nhận token bằng cách gửi một phương thức GET đến Token KVS.
@@ -70,7 +70,7 @@ pic 1
 - Bước 4: Kiểm tra thời gian hiện tại với thời gian hết hạn của token. Nếu token hết hạn, trả về Token not found. Nếu còn hạn, chuyển sang bước 5
 - Bước 5: Kiểm tra token có bị thu hồi không, nếu no, trả về cho người dùng thông điệp HTTP/1.1 200OK (token sử dụng được).
 
-pic 2
+![](images/token-format-2.png)
 
 ### UUID Token Revocation Workflow 
 - Bước 1: Gửi một yêu cầu DELETE token. Trước khi revoke token thì phải xác nhận lại token (Token validation workflow)
@@ -83,13 +83,13 @@ pic 2
 - Bước 8: Lọc các event revoke đang tồn tại dựa trên Revoke At.
 - Bước 9: Set giá trị false vào token avs của token.
 
-pic 3 
+![](images/token-format-3.png)
 
 ### UUID - Multiple Data Centers
 UUID Token không hỗ trợ xác thực và ủy quyền trong trường hợp multiple data centers. Như ví dụ mô tả ở hình vẽ, một hệ thống cloud triển khai trên hai datacenter ở hai nơi khác nhau. Khi xác thực với keystone trên datacenter US-West và sử dụng token trả về để request tạo một máy ảo với Nova, yêu cầu hoàn toàn hợp lệ và khởi tạo máy ảo thành công. Trong khi nếu mang token đó sang datacenter US-East yêu cầu tạo máy ảo thì sẽ không được xác nhận do token trong backend database US-West không có bản sao bên US-East.
 
 
-pic 4
+![](images/token-format-4.png)
 
 ## PKI - PKIZ:
 ### PKI
@@ -125,7 +125,7 @@ Tiến trình tạo ra PKI token:
 - Bước tiếp theo, nếu muốn đóng gói token định dạng PKI thì convert payload sang UTF-8, convert token sang một URL định dạng an toàn. Nếu muốn token đóng gói dưới định dang - PKIz, thì phải nén token sử dụng zlib, tiến hành mã hóa base64 token tạo ra URL an toàn, convert sang UTF-8 và chèn thêm tiếp đầu ngữ "PKIZ"
 - Lưu thông tin token vào Backend (SQL/KVS)
 
-pic 6
+![](images/token-format-6.png)
 
 
 
@@ -136,7 +136,7 @@ Tương tự UUID, chỉ khác ở chỗ là:
 ### PKI/PKIZ - Multiple Data Centers
 Cùng kịch bản tương tự như mutiple data centers với uuid, tuy nhiên khi yêu cầu keystone cấp một pki token và sử dụng key đó để thực hiện yêu cầu tạo máy ảo thì trên cả 2 data center US-West và US-East, keystone middle cấu hình trên nova đều xác thực và ủy quyền thành công, tạo ra máy ảo theo đúng yêu cầu. Điều này trông có vẻ như PKI/PKiZ token hỗ trợ multiple data centers, nhưng thực tế thì các backend database ở hai datacenter phải có quá trình đồng bộ hoặc tạo bản sao các PKI/PKIZ token thì mới thực hiện xác thực và ủy quyền được.
 
-pic 5
+![](images/token-format-5.png)
 
 ## Token Fernet
 ### Tổng quan
@@ -158,8 +158,18 @@ pic 5
  - Loại 2 - Secondary Key chỉ dùng để giải mã. -> Lowest Index < Secondary Key Index < Highest Index
  - Stagged Key - tương tự như secondary key trong trường hợp nó sử dụng để giải mã token. Tuy nhiên nó sẽ trở thành Primary Key trong lần luân chuyển khóa tiếp theo. Stagged Key có chỉ số 0.
 
+
+### Ưu nhược điểm
+Ưu điểm:
+- Nhẹ hơn PKI và PKIZ
+- Không cần lưu trữ trong DB
+- Trong token mang thông tin
+- Hỗ trợ Multi OpenStack
+Nhược điểm:
+- Quá trình xác thực tăng hoạt động thu hồi
+
 ### Fernet Key rotation
-pic 7
+![](images/token-format-7.png)
 
 # Nguồn
 
