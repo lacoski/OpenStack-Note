@@ -22,9 +22,9 @@ Các vấn đề chính:
 - nova-api: Là service tiếp nhận và phản hồi các compute API calls từ user. Service hỗ trợ OpenStack Compute API, Amazon EC2 API và Admin API đặc biệt được dùng để user thực hiện các thao tác quản trị. Nó cũng có một loạt các policies và thực hiện hầu hết các orchestration activities ví dụ như chạy máy ảo.
 - nova-api-metadata: Là service tiếp nhận các metadata request từ máy ảo. Service này thường được dùng khi chạy multi-host kết hợp với nova-network.
 - nova-compute: Là service chịu trách nhiệm tạo và hủy các máy ảo qua hypervisors APIs. Ví dụ:
- - XenAPI for XenServer/XCP
- - libvirt for KVM or QEMU
- - VMwareAPI for VMware
+  - XenAPI for XenServer/XCP
+  - libvirt for KVM or QEMU
+  - VMwareAPI for VMware
 - nova-placement-api: Lần đầu xuất hiện tại bản Newton, placement api được dùng để theo dõi thống kê và muức độ sử dụng của mỗi một resource provider. Provider ở đây có thể là compute node, shared storage pool hoặc IP allocation pool. Ví dụ, một máy ảo có thể được khởi tạo và lấy RAM, CPU từ compute node, lấy disk từ storage bên ngoài và lấy địa chỉ IP từ pool resource bên ngoài.
 - nova-scheduler: Service này sẽ lấy các yêu cầu máy ảo đặt vào queue và xác định xem chúng được chạy trên compute server host nào.
 - nova-conductor: Là module chịu trách nhiệm về các tương tác giữa nova-compute và database. Nó sẽ loại bỏ tất cả các kết nối trực tiếp từ nova-compute tới database.
@@ -34,10 +34,10 @@ Các vấn đề chính:
 - nova-xvpvncproxy : Cung cấp proxy cho việc truy cập các máy ảo đang chạy thông qua VNC connection. Nó hỗ trợ OpenStack-specific Java client.
 - queue: Trung tâm giao tiếp giữa các daemons. Thường dùng RabbitMQ hoặc các AMQP message queue khác như ZeroMQ.
 - SQL database : Dùng để lưu các trạng thái của hạ tâng caloud bảo gồm:
- - Các loại máy ảo có thể chạy
- - Các máy ảo đang được dùng
- - Các network khả dụng
- - projects
+  - Các loại máy ảo có thể chạy
+  - Các máy ảo đang được dùng
+  - Các network khả dụng
+  - projects
 
 Nova sử dụng thiết kế shared-nothing, như vậy bạn có thể chạy tất cả các thành phần trên các servers riêng lẻ. Trạng thái của mỗi dịch vụ được lưu trong database. Hàng đợi thông điệp (message queue) xử lý tất cả các yêu cầu và chuyển đến cho scheduler. Nova compute hỗ trợ nhiều hypervisors phổ biến. Docker, Hyper-V, Kernel-based Virtual Machine (KVM), Linux Containers (LXC), Quick Emulator (QEMU), VMware vSphere and Xen.
 
