@@ -64,7 +64,7 @@ trust_id: NULL
 
 Sử dụng GUI
 
-![](images/uuid-demo-1.png))
+![](images/uuid-demo-1.png)
 
 > Do tính chất của token UUID (Token ko mang thông tin), token được lưu vào database nên ta thấy được ID token bên trong DB của keystone
 
