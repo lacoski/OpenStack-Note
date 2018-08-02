@@ -168,3 +168,10 @@ openstack token issue
 +---------------------+----------------------------------+
 
 ```
+
+## Nguồn tham khảo
+
+https://docs.openstack.org/python-openstackclient/latest/cli/command-list.html
+
+https://github.com/thaonguyenvan/meditech-thuctap/blob/master/ThaoNV/Tim%20hieu%20OpenStack/docs/keystone/using-keystone.md#command
+
