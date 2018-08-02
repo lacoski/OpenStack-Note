@@ -18,9 +18,10 @@ Ghi chép cho tôi về OpenStack
 ## Keystone
 ### [1. Tổng quan về KeyStone](docs/keystone/keystone-overview.md)
 ### [1.1. Bổ sung khái niệm KeyStone](docs/keystone/keystone-note-indeep.md)
-
-### [2. 4 loại Token OpenSTack](docs/keystone/token-keystone.md)
+### [1.2. Sử dụng KeyStone CLI](docs/keystone/keystone-cli.md)
+### [2. Tính chất 4 loại Token OpenSTack](docs/keystone/token-keystone.md)
 ### [3. RBAC - Điều khiển truy cập trên cơ sở vai trò](docs/keystone/rbac.md)
+
 
 ## Glance
 ### [1. Tổng quan về Glance](docs/glance/glance-overview.md)
