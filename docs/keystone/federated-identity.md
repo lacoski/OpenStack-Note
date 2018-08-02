@@ -72,7 +72,15 @@ Một số ý chính của keystone:
 - Keystone quản lý số lượng các endpoint, bao gồm loại dịch vù và URL
 - Mỗi endpint liên kết với 1 service.
 
-# Step 4: Invoke the target endpoint service API
+# Step 4: Validate role metadata
+Tại bước này, service endpoint sẽ sử dụng token metadata để xác thực các quyền của user sử dụng.
+
+Khái niệm này được tham chiếu tới khái niệm Role Base Access Control (RBAC), nó liên quan tới các dịch vụ sử dụng 'rule engine' để xác định token có quyền truy cập thế nào dựa trên file `policy.json`.
+
+Tìm hiểu thêm `policy.json` trong docs openstack. 
+
+
+# Step 5: Invoke the target endpoint service API
 Sau khi có được scoped token, ta sẽ đem token đó để làm việc với các endpoint service hiện tại.
 
 > Xem thêm tài liệu Openstack api 
