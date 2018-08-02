@@ -21,7 +21,7 @@ Ghi chép cho tôi về OpenStack
 ### [1.2. Sử dụng KeyStone CLI](docs/keystone/keystone-cli.md)
 ### [2. Tính chất 4 loại Token OpenSTack](docs/keystone/token-keystone.md)
 ### [3. RBAC - Điều khiển truy cập trên cơ sở vai trò](docs/keystone/rbac.md)
-
+### [4. Cấu hình UUID Token Openstack](docs/keystone/config-uuid-keystone.md)
 
 ## Glance
 ### [1. Tổng quan về Glance](docs/glance/glance-overview.md)
