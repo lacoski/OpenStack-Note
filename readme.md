@@ -4,6 +4,8 @@ Ghi chép cho tôi về OpenStack
 
 ## Tổng quan
 ### [1. Tổng quan về OpenStack](docs/openstack-overview.md)
+### [2. RBAC - Điều khiển truy cập trên cơ sở vai trò](docs/keystone/rbac.md)
+### [3. Custom role openstack](docs/lt/role-policy-ops.md)
 
 ## Cài đặt OPENSTACK 
 ### [1. Cài đặt PackStack Queen](docs/manual/packstack/queens.md) 
@@ -20,10 +22,11 @@ Ghi chép cho tôi về OpenStack
 ### [1.1. Bổ sung khái niệm KeyStone](docs/keystone/keystone-note-indeep.md)
 ### [1.2. Sử dụng KeyStone CLI](docs/keystone/keystone-cli.md)
 ### [2. Tính chất 4 loại Token OpenSTack](docs/keystone/token-keystone.md)
-### [3. RBAC - Điều khiển truy cập trên cơ sở vai trò](docs/keystone/rbac.md)
-### [4. Cấu hình UUID Token Openstack](docs/keystone/config-uuid-keystone.md)
+### [3. Cấu hình UUID Token Openstack](docs/keystone/config-uuid-keystone.md)
+### [4. Token fernet Openstack]()
 ### [5. Tìm hiểu câu lệnh keystone-manage](docs/keystone/keystone-manager.md)
 ### [6. Cấu trúc database keystone (1 số thành phần quan trọng)](docs/keystone/cautruc-db-keystone.md)
+
 
 ## Glance
 ### [1. Tổng quan về Glance](docs/glance/glance-overview.md)
