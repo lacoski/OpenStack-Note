@@ -26,7 +26,7 @@ Ghi chép cho tôi về OpenStack
 ### [4. Token fernet Openstack](docs/keystone/fernet-token.md)
 ### [5. Tìm hiểu câu lệnh keystone-manage](docs/keystone/keystone-manager.md)
 ### [6. Cấu trúc database keystone (1 số thành phần quan trọng)](docs/keystone/cautruc-db-keystone.md)
-
+### [7. Ý nghĩa cấu hình keystone](docs/keystone/y-nghia-thamso-keystone.md)
 
 ## Glance
 ### [1. Tổng quan về Glance](docs/glance/glance-overview.md)
