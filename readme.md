@@ -23,6 +23,8 @@ Ghi chép cho tôi về OpenStack
 ### [3. RBAC - Điều khiển truy cập trên cơ sở vai trò](docs/keystone/rbac.md)
 ### [4. Cấu hình UUID Token Openstack](docs/keystone/config-uuid-keystone.md)
 ### [5. Tìm hiểu câu lệnh keystone-manage](docs/keystone/keystone-manager.md)
+### [6. Cấu trúc database keystone (1 số thành phần quan trọng)](docs/keystone/cautruc-db-keystone.md)
+
 ## Glance
 ### [1. Tổng quan về Glance](docs/glance/glance-overview.md)
 

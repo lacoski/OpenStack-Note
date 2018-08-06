@@ -1,12 +1,34 @@
 # Cấu trúc DB KeyStone
 ---
+## Tổng quan
+DB keystone gồm 5 thành phần chính
+- Identity:
+  - user
+  - group
+  - user-group-membership
+- Assignment
+  - assignment
+  - role
+- Resource
+  - project
+  - domain
+- Credential
+  - credential
+- Trust
+  - trust
+  - trust_role
+
+Các thành phần bổ sung:
+- Service endpoint
+- Token
 ## Thành phần Identity
-### Tổng quan
 - Idendity backend của keystone lưu trữ user, group, user-group
 - Có 3 bảng để thể hiện mục đích này
   - user
   - group
   - user-group-membership
+
+> Thành phần này sẽ được chia sẻ tới các db của service khác (vd: nova) để khoanh vùng tài nguyên sử dụng của Openstack
 
 ### user table
 ```
@@ -50,6 +72,8 @@ Primary Key: (id), Unique Key: (name)
 - Có 2 loại table trong backend
   - project
   - domain
+
+> Thành phần này sẽ được chia sẻ tới các db của service khác (vd: nova) để khoanh vùng tài nguyên sử dụng của Openstack
 
 ### project Table
 ```
@@ -97,6 +121,47 @@ trust_id | role_id
 Primary Key: (trust_id, role_id)
 ```
 
+## Thành phần service endpoint
+- Quản lý endpoint service trong openstack
+- gồm các bảng:
+  - endpoint
+  - service
+  - region
+
+### endpoint table
+```
+id | interface | service_id | url | enable | region_id 
+
+Primary Key: (id)
+Unique Key: (service_id, region_id)
+```
+
+### service table 
+```
+id | type | enable | extra 
+
+primary Key: (id)
+```
+
+### region table 
+```
+id | description | extra
+
+Primary Key: (id)
+```
+
+## Token
+- Chứa token được sinh ra (UUID))
+- gồm 1 bảng
+  - Token
+
+### token table
+```
+id | exprires | extra | valid | trust_id | user_id 
+
+Primary Key: (id)
+Unique Key: (trust_id, user_id)
+```
 # Nguồn
 
 https://wiki.openstack.org/wiki/Keystone-schema-in-cassandra
