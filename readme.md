@@ -23,7 +23,7 @@ Ghi chép cho tôi về OpenStack
 ### [1.2. Sử dụng KeyStone CLI](docs/keystone/keystone-cli.md)
 ### [2. Tính chất 4 loại Token OpenSTack](docs/keystone/token-keystone.md)
 ### [3. Cấu hình UUID Token Openstack](docs/keystone/config-uuid-keystone.md)
-### [4. Token fernet Openstack]()
+### [4. Token fernet Openstack](docs/keystone/fernet-token.md)
 ### [5. Tìm hiểu câu lệnh keystone-manage](docs/keystone/keystone-manager.md)
 ### [6. Cấu trúc database keystone (1 số thành phần quan trọng)](docs/keystone/cautruc-db-keystone.md)
 
