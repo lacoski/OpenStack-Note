@@ -18,11 +18,11 @@ Glance có các thành phần:
 - glance-registry: thực hiện tác vụ lưu trữ, xử lý và thu thập metadata của images. - Metadata bao gồm các thông tin như kích thước và loại image.
 - database: cơ sở dữ liệu lưu trữ metadata của image
 - storage repository : Tích hợp các thành phần OpenStack: 
- - File system: lưu trữ các image của các máy ảo trong hệ thống tệp tin thông thường theo mặc định, hỗ trợ đọc ghi các các image file dễ dàng vào hệ thống tệp tin. (Mặc định)
- - Object Storage: Hệ thống lưu trữ do OpenStack Swift cung cấp lưu trữ các image dưới dạng các object.
- - BlockStorage: Hệ thống lưu trữ do OpenStack Cinder cung cấp, lưu trữ các image dưới dạng khối.
- - RADOS Block Device(RBD): Lưu trữ các image trong Ceph, sử dụng giải pháp RBD của Ceph.
- - HTTP: OpenStack Image Service có thể đọc các vitual machine service có sẵn trên internet sử dụng giao thức HTTP. Lưu trữ này chỉ có thể đọc.
+  - File system: lưu trữ các image của các máy ảo trong hệ thống tệp tin thông thường theo mặc định, hỗ trợ đọc ghi các các image file dễ dàng vào hệ thống tệp tin. (Mặc định)
+  - Object Storage: Hệ thống lưu trữ do OpenStack Swift cung cấp lưu trữ các image dưới dạng các object.
+  - BlockStorage: Hệ thống lưu trữ do OpenStack Cinder cung cấp, lưu trữ các image dưới dạng khối.
+  - RADOS Block Device(RBD): Lưu trữ các image trong Ceph, sử dụng giải pháp RBD của Ceph.
+  - HTTP: OpenStack Image Service có thể đọc các vitual machine service có sẵn trên internet sử dụng giao thức HTTP. Lưu trữ này chỉ có thể đọc.
 
 
 ## Kiến trúc của Glance
@@ -30,12 +30,12 @@ Glance có các thành phần:
 - Glance Domain Controller quản lí các hoạt động bên trong. Các hoạt động được chia ra thành các tầng khác nhau. Mỗi tầng thực hiện một chức năng riêng biệt.
 - Glane store là lớp giao tiếp giữa glane và storage back end ở ngoài glane hoặc local filesystem và nó cung cấp giao diện thống nhất để truy cập. Glance sử dụng SQL central Database để truy cập cho tất cả các thành phần trong hệ thống.
 - Glance bao gồm một số thành phần sau:
- - Client: Bất kỳ ứng dụng nào sử dụng Glance server đều được gọi là client.
- - REST API: dùng để gọi đến các chức năng của Glance thông qua REST.
- - Database Abstraction Layer (DAL): một API để thống nhất giao tiếp giữa Glance và database.
- - Glance Domain Controller: là middleware thực hiện các chức năng chính của Glance là: authorization, notifications, policies, database connections.
- - Glance Store: Giao diện tích hợp giữa Glance và các data store.
- - Registry Layer: Layer không bắt buộc để tổ chức giao tiếp mang tính bảo mật giữa domain và DAL nhờ việc sử dụng một dịch vụ riêng biệt.
+  - Client: Bất kỳ ứng dụng nào sử dụng Glance server đều được gọi là client.
+  - REST API: dùng để gọi đến các chức năng của Glance thông qua REST.
+  - Database Abstraction Layer (DAL): một API để thống nhất giao tiếp giữa Glance và database.
+  - Glance Domain Controller: là middleware thực hiện các chức năng chính của Glance là: authorization, notifications, policies, database connections.
+  - Glance Store: Giao diện tích hợp giữa Glance và các data store.
+  - Registry Layer: Layer không bắt buộc để tổ chức giao tiếp mang tính bảo mật giữa domain và DAL nhờ việc sử dụng một dịch vụ riêng biệt.
 
 ![](images/glance-overview-1.png)
 
