@@ -119,7 +119,7 @@ keystone-manage bootstrap --bootstrap-password Welcome123 \
   --bootstrap-public-url http://172.16.4.200:5000/v3/ \
   --bootstrap-region-id RegionOne
 ```
-> Cấu trúc db keystone [xem thêm](cautruc-db-keystone.md)
+> Token và api url [xem thêm](keystone-note-indeep.md)
 
 ### Cấu hình Apache HTTP server
 
