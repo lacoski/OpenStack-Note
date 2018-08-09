@@ -31,6 +31,7 @@ Ghi chép cho tôi về OpenStack
 ## Glance
 ### [1. Tổng quan về Glance](docs/glance/glance-overview.md)
 ### [2. Policy.json Glance](docs/glance/policy-glace.md)
+### [3. Glance database](docs/glance/db-architecture-glance.md))
 
 ## Cinder
 ### [1. Tổng quan về Cinder](docs/cinder/cinder-overview.md)
