@@ -43,11 +43,18 @@ Tạo thông tin xác thực:
   ```
 
 ## Cài đặt các thành phần
-Cài đặt gói
+
+
+### Cài đặt gói
 ```
 yum install openstack-glance -y
 ```
 
+Glance gồm 2 file cấu hình chính:
+- glance-registry.conf
+- glance-api.conf
+
+### Cấu hình glance-api
 Sao lưu cấu hình file config glance-api
 ```
 cp /etc/glance/glance-api.conf /etc/glance/glance-api.conf.bak
@@ -84,6 +91,11 @@ vi /etc/glance/glance-api.conf
   default_store = file
   filesystem_store_datadir = /var/lib/glance/images/
   ```
+
+Lưu ý:
+- Cấu hình kết nối database (`[database]`)
+- Cấu hình kết nối keystone (`[keystone_authtoken]`)
+
 
 > cat /etc/glance/glance-api.conf | egrep -v "(^#.*|^$)"
 
