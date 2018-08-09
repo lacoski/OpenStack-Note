@@ -1,4 +1,4 @@
 # Cấu trúc Database glance
 ---
-![](images/db-glance.png))
+![](images/db-glance.png)
 
