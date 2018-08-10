@@ -23,7 +23,8 @@ Glance có các thành phần:
   - BlockStorage: Hệ thống lưu trữ do OpenStack Cinder cung cấp, lưu trữ các image dưới dạng khối.
   - RADOS Block Device(RBD): Lưu trữ các image trong Ceph, sử dụng giải pháp RBD của Ceph.
   - HTTP: OpenStack Image Service có thể đọc các vitual machine service có sẵn trên internet sử dụng giao thức HTTP. Lưu trữ này chỉ có thể đọc.
-
+- Metadata definition service:
+  - API cho nhà cung cấp, admin, service, user định nghĩa custom metadata. 
 
 ## Kiến trúc của Glance
 - Glance có kiến trúc client-server, cung cấp REST API cho user tương tác.

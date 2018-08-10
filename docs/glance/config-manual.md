@@ -95,6 +95,9 @@ vi /etc/glance/glance-api.conf
 Lưu ý:
 - Cấu hình kết nối database (`[database]`)
 - Cấu hình kết nối keystone (`[keystone_authtoken]`)
+- Cấu hình nơi lưu trữ images (`[glance_store]`)
+  - Mặc đinh image được lưu tại '/var/lib/glance/images'
+  - Có thể cấu hình Glance kết nới tới Ceph, hoặc Swift
 
 
 > cat /etc/glance/glance-api.conf | egrep -v "(^#.*|^$)"
