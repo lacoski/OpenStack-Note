@@ -82,6 +82,8 @@
 
 ![](images/create-vm-flow-10.png)
 
+- Nova compute update trạng thái VM tới Nova Db thông quá Nova Conductor
+
 ![](images/create-vm-flow-11.png)
 
 ### Bước 7: Cập nhật trạng thái VM
