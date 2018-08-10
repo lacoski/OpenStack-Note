@@ -2,6 +2,13 @@
 ---
 
 ## Khởi tạo
+Quá trình khởi tạo bao gồm:
+- Tạo DB sử dụng cho glance
+- Tạo thông tin xác thực
+  - Tạo glance user trong Keystone
+  - Tạo glance service
+  - Tạo glance endpoint 
+
 Tạo database cua Glance:
 ```
 mysql -u root -pWelcome123 
@@ -43,7 +50,10 @@ Tạo thông tin xác thực:
   ```
 
 ## Cài đặt các thành phần
-
+Quá trình cài đặt bao gồm
+- Cài đặt gói
+- Cấu hình glance-api
+- Cấu hình glance-registry
 
 ### Cài đặt gói
 ```
@@ -54,7 +64,7 @@ Glance gồm 2 file cấu hình chính:
 - glance-registry.conf
 - glance-api.conf
 
-### Cấu hình glance-api
+### Cấu hình glance
 Sao lưu cấu hình file config glance-api
 ```
 cp /etc/glance/glance-api.conf /etc/glance/glance-api.conf.bak
