@@ -68,6 +68,7 @@
   rbd_store_ceph_conf = /etc/ceph/ceph.conf
   rbd_store_chunk_size = 8
   ```
+  > Lưu ý, nếu cấu hình Glance local đã có từ trước, xóa sạch thẻ [glance_storage, điền lại]
 - Khởi động lại dịch vụ
   ```
   systemctl restart openstack-glance-*
@@ -127,6 +128,7 @@
   rbd_secret_uuid = 75fcfc41-ee46-458c-880a-adbc91b385a3
   report_discard_supported = true
   ```
+  > Lưu ý, nếu cấu hình Cinder LVM đã có từ trước, có thể xóa sạch hoặc để lại (OPS hỗ trợ multi storage)
 - Khởi động lại dịch vụ (trên controller)
   ```
   systemctl restart openstack-cinder-api.service openstack-cinder-volume.service openstack-cinder-scheduler.service
@@ -220,6 +222,291 @@
   rbd -p vms ls
   <Id VM>
   ```
+
+# File cấu hình đầy đủ
+
+- Glance
+```
+[root@controller1 ~]# cat /etc/glance/glance-api.conf | egrep -v "(^#.*|^$)"
+[DEFAULT]
+enable_v1_api=False
+bind_host=0.0.0.0
+bind_port=9292
+workers=4
+image_cache_dir=/var/lib/glance/image-cache
+registry_host=0.0.0.0
+debug=False
+log_file=/var/log/glance/api.log
+log_dir=/var/log/glance
+transport_url=rabbit://guest:guest@172.16.4.200:5672/
+[cors]
+[database]
+connection=mysql+pymysql://glance:Welcome123@172.16.4.200/glance
+[glance_store]
+show_image_direct_url = True
+default_store = rbd
+stores = file,http,rbd
+rbd_store_pool = images
+rbd_store_user = glance
+rbd_store_ceph_conf = /etc/ceph/ceph.conf
+rbd_store_chunk_size = 8
+[image_format]
+[keystone_authtoken]
+auth_uri=http://172.16.4.200:5000/v3
+auth_type=password
+auth_url=http://172.16.4.200:35357
+username=glance
+password=Welcome123
+user_domain_name=Default
+project_name=services
+project_domain_name=Default
+[matchmaker_redis]
+[oslo_concurrency]
+[oslo_messaging_amqp]
+[oslo_messaging_kafka]
+[oslo_messaging_notifications]
+driver=messagingv2
+topics=notifications
+[oslo_messaging_rabbit]
+ssl=False
+default_notification_exchange=glance
+[oslo_messaging_zmq]
+[oslo_middleware]
+[oslo_policy]
+policy_file=/etc/glance/policy.json
+[paste_deploy]
+flavor=keystone
+[profiler]
+[store_type_location_strategy]
+[task]
+[taskflow_executor]
+
+```
+- Cinder
+```
+[DEFAULT]
+enable_v3_api=True
+storage_availability_zone=nova
+default_availability_zone=nova
+default_volume_type=iscsi
+auth_strategy=keystone
+osapi_volume_listen=0.0.0.0
+osapi_volume_workers=4
+debug=False
+log_dir=/var/log/cinder
+transport_url=rabbit://guest:guest@172.16.4.200:5672/
+control_exchange=openstack
+api_paste_config=/etc/cinder/api-paste.ini
+glance_host=172.16.4.200
+nova_catalog_info=compute:nova:publicURL
+nova_catalog_admin_info=compute:nova:adminURL
+enabled_backends = ceph
+glance_api_version = 2
+[backend]
+[backend_defaults]
+[barbican]
+[brcd_fabric_example]
+[cisco_fabric_example]
+[coordination]
+[cors]
+[database]
+connection=mysql+pymysql://cinder:Welcome123@172.16.4.200/cinder
+[fc-zone-manager]
+[healthcheck]
+[key_manager]
+backend=cinder.keymgr.conf_key_mgr.ConfKeyManager
+[keystone_authtoken]
+auth_uri=http://172.16.4.200:5000/
+auth_type=password
+auth_url=http://172.16.4.200:35357
+username=cinder
+password=Welcome123
+user_domain_name=Default
+project_name=services
+project_domain_name=Default
+[matchmaker_redis]
+[nova]
+[oslo_concurrency]
+lock_path=/var/lib/cinder/tmp
+[oslo_messaging_amqp]
+[oslo_messaging_kafka]
+[oslo_messaging_notifications]
+driver=messagingv2
+[oslo_messaging_rabbit]
+ssl=False
+[oslo_messaging_zmq]
+[oslo_middleware]
+[oslo_policy]
+policy_file=/etc/cinder/policy.json
+[oslo_reports]
+[oslo_versionedobjects]
+[profiler]
+[service_user]
+[ssl]
+[vault]
+[ceph]
+volume_driver = cinder.volume.drivers.rbd.RBDDriver
+volume_backend_name = ceph
+rbd_pool = volumes
+rbd_ceph_conf = /etc/ceph/ceph.conf
+rbd_flatten_volume_from_snapshot = false
+rbd_max_clone_depth = 5
+rbd_store_chunk_size = 4
+rados_connect_timeout = -1
+rbd_user = cinder
+rbd_secret_uuid = 75fcfc41-ee46-458c-880a-adbc91b385a3
+report_discard_supported = true
+```
+
+- Nova
+```
+[DEFAULT]
+rootwrap_config=/etc/nova/rootwrap.conf
+allow_resize_to_same_host=False
+vif_plugging_is_fatal=True
+vif_plugging_timeout=300
+cpu_allocation_ratio=16.0
+ram_allocation_ratio=1.5
+force_snat_range=0.0.0.0/0
+metadata_host=172.16.4.200
+dhcp_domain=novalocal
+firewall_driver=nova.virt.firewall.NoopFirewallDriver
+state_path=/var/lib/nova
+report_interval=10
+service_down_time=60
+enabled_apis=osapi_compute,metadata
+osapi_compute_listen=0.0.0.0
+osapi_compute_listen_port=8774
+osapi_compute_workers=4
+metadata_listen=0.0.0.0
+metadata_listen_port=8775
+metadata_workers=4
+debug=False
+log_dir=/var/log/nova
+transport_url=rabbit://guest:guest@172.16.4.200:5672/
+image_service=nova.image.glance.GlanceImageService
+osapi_volume_listen=0.0.0.0
+[api]
+auth_strategy=keystone
+use_forwarded_for=False
+fping_path=/usr/sbin/fping
+[api_database]
+connection=mysql+pymysql://nova_api:Welcome123@172.16.4.200/nova_api
+[barbican]
+[cache]
+[cells]
+[cinder]
+[compute]
+[conductor]
+workers=4
+[console]
+[consoleauth]
+[cors]
+[crypto]
+[database]
+connection=mysql+pymysql://nova:Welcome123@172.16.4.200/nova
+[devices]
+[ephemeral_storage_encryption]
+[filter_scheduler]
+host_subset_size=1
+max_io_ops_per_host=8
+max_instances_per_host=50
+available_filters=nova.scheduler.filters.all_filters
+enabled_filters=RetryFilter,AvailabilityZoneFilter,RamFilter,DiskFilter,ComputeFilter,ComputeCapabilitiesFilter,ImagePropertiesFilter,ServerGroupAntiAffinityFilter,ServerGroupAffinityFilter,CoreFilter
+use_baremetal_filters=False
+weight_classes=nova.scheduler.weights.all_weighers
+[glance]
+api_servers=http://172.16.4.200:9292
+[guestfs]
+[healthcheck]
+[hyperv]
+[ironic]
+[key_manager]
+[keystone]
+[keystone_authtoken]
+auth_uri=http://172.16.4.200:5000/
+auth_type=password
+auth_url=http://172.16.4.200:35357
+username=nova
+password=Welcome123
+user_domain_name=Default
+project_name=services
+project_domain_name=Default
+[libvirt]
+vif_driver=nova.virt.libvirt.vif.LibvirtGenericVIFDriver
+[matchmaker_redis]
+[metrics]
+[mks]
+[neutron]
+url=http://172.16.4.200:9696
+ovs_bridge=br-int
+default_floating_pool=public
+extension_sync_interval=600
+service_metadata_proxy=True
+metadata_proxy_shared_secret=Welcome123
+timeout=60
+auth_type=v3password
+auth_url=http://172.16.4.200:35357/v3
+project_name=services
+project_domain_name=Default
+username=neutron
+user_domain_name=Default
+password=Welcome123
+region_name=RegionOne
+[notifications]
+notify_on_state_change=vm_and_task_state
+notify_api_faults=False
+[osapi_v21]
+[oslo_concurrency]
+lock_path=/var/lib/nova/tmp
+[oslo_messaging_amqp]
+[oslo_messaging_kafka]
+[oslo_messaging_notifications]
+driver=messagingv2
+[oslo_messaging_rabbit]
+ssl=False
+[oslo_messaging_zmq]
+[oslo_middleware]
+[oslo_policy]
+policy_file=/etc/nova/policy.json
+[pci]
+[placement]
+os_region_name=RegionOne
+auth_type=password
+auth_url=http://172.16.4.200:5000/
+project_name=services
+project_domain_name=Default
+username=placement
+user_domain_name=Default
+password=Welcome123
+[quota]
+[rdp]
+[remote_debug]
+[scheduler]
+host_manager=host_manager
+driver=filter_scheduler
+max_attempts=3
+[serial_console]
+[service_user]
+[spice]
+[upgrade_levels]
+[vault]
+[vendordata_dynamic_auth]
+project_domain_name=Default
+user_domain_name=Default
+[vmware]
+[vnc]
+novncproxy_host=0.0.0.0
+novncproxy_port=6080
+auth_schemes=none
+[workarounds]
+[wsgi]
+api_paste_config=api-paste.ini
+[xenserver]
+[xvp]
+[placement_database]
+connection=mysql+pymysql://nova_placement:Welcome123@172.16.4.200/nova_placement
+```
 
 # Nguồn
 
