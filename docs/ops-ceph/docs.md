@@ -510,5 +510,7 @@ connection=mysql+pymysql://nova_placement:Welcome123@172.16.4.200/nova_placement
 
 # Nguồn
 
+http://docs.ceph.com/docs/jewel/rbd/rbd-openstack/
+
 http://docs.ceph.com/docs/mimic/rbd/rbd-openstack/
 
