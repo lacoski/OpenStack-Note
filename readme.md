@@ -6,6 +6,7 @@ Ghi chép cho tôi về OpenStack
 ### [1. Tổng quan về OpenStack](docs/openstack-overview.md)
 ### [2. RBAC - Điều khiển truy cập trên cơ sở vai trò](docs/keystone/rbac.md)
 ### [3. Custom role openstack](docs/lt/role-policy-ops.md)
+### 4. Ceph x OpenStack (nova, cinder, glance)
 
 ## Cài đặt OPENSTACK 
 ### [1. Cài đặt PackStack Queen](docs/manual/packstack/queens.md) 
