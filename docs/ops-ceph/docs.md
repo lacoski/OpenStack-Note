@@ -57,6 +57,12 @@
   ```
 
 ### Tại Controller
+- Backup file cấu hình 
+  ```
+  cp /etc/glance/glance-api.conf /etc/glance/glance-api.conf.bak
+
+  cat /etc/glance/glance-api.conf | egrep -v "(^#.*|^$)" > temp && cat temp > /etc/glance/glance-api.conf && rm -rf temp
+  ```
 - Sửa cấu hình tại Controller `/etc/glance/glance-api.conf`
   ```
   [glance_store]
@@ -105,10 +111,17 @@
   ```
 - Sinh UUID
   ```
-  uuidgen
-  75fcfc41-ee46-458c-880a-adbc91b385a3
+  [root@ceph-aio ~]# uuidgen
+75fcfc41-ee46-458c-880a-adbc91b385a3
   ```
+
 ### Tạo Controller 
+- Backup file cấu hình 
+  ```
+  cp /etc/cinder/cinder.conf /etc/cinder/cinder.conf.bak
+
+  cat /etc/cinder/cinder.conf | egrep -v "(^#.*|^$)" > temp && cat temp > /etc/cinder/cinder.conf && rm -rf temp
+  ```
 - Sửa cấu hình tại Cinder `/etc/cinder/cinder.conf`
   ```
   [DEFAULT]
@@ -186,6 +199,12 @@
   ```
   uuidgen
   805b9716-7fe8-45dd-8e1e-5dfdeff8b9be
+  ```
+- Backup file cấu hình 
+  ```
+  cp /etc/nova/nova.conf /etc/nova/nova.conf.bak
+
+  cat /etc/nova/nova.conf | egrep -v "(^#.*|^$)" > temp && cat temp > /etc/nova/nova.conf && rm -rf temp
   ```
 - Chỉnh sửa `/etc/nova/nova.conf`
   ```
@@ -327,7 +346,6 @@ project_domain_name=Default
 [matchmaker_redis]
 [nova]
 [oslo_concurrency]
-lock_path=/var/lib/cinder/tmp
 [oslo_messaging_amqp]
 [oslo_messaging_kafka]
 [oslo_messaging_notifications]
