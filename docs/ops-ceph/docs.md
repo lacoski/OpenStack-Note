@@ -11,6 +11,7 @@
   ```
   sudo yum install python-rbd -y
   sudo yum install ceph-common -y
+  mkdir /etc/ceph
   ```
 
 ## 1. Tích hợp Glance
@@ -127,6 +128,7 @@
   [DEFAULT]
   enabled_backends = ceph
   glance_api_version = 2
+  default_volume_type = ceph
 
   [ceph]
   volume_driver = cinder.volume.drivers.rbd.RBDDriver
@@ -141,10 +143,20 @@
   rbd_secret_uuid = 75fcfc41-ee46-458c-880a-adbc91b385a3
   report_discard_supported = true
   ```
-  > Lưu ý, nếu cấu hình Cinder LVM đã có từ trước, có thể xóa sạch hoặc để lại (OPS hỗ trợ multi storage)
+  > Lưu ý, nếu cấu hình Cinder LVM đã có từ trước, có thể xóa sạch hoặc để lại (OPS hỗ trợ multi storage). Nếu cấu hình Multi storage, cần chỉ định volume sẽ được tạo từ Backend storage nào. Để mặc định, Openstack có thể tạo được hoặc báo lỗi không thể tìm được backend phù hợp (do volume type mặc định).
 - Khởi động lại dịch vụ (trên controller)
   ```
   systemctl restart openstack-cinder-api.service openstack-cinder-volume.service openstack-cinder-scheduler.service
+  systemctl restart openstack-cinder-api.service openstack-cinder-volume.service openstack-cinder-scheduler.service openstack-cinder-backup.service
+  ```
+- Chỉ định Volume type tạo trên backend
+  ```
+  openstack volume type create ceph
+  openstack volume type set ceph --property volume_backend_name=ceph
+
+  # Hoặc
+  cinder type-create ceph
+  cinder type-key hdd set volume_backend_name=ceph
   ```
 ### Tại Compute
 - Cấu hình trên Compute node
