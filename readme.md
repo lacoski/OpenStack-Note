@@ -21,6 +21,7 @@ Ghi chép cho tôi về OpenStack
 ### [3. Overcommit Openstack](docs/nova/overcommit.md)
 ### [4. Quotas Openstack](docs/nova/quotas.md)
 ### [5. Migrate VM](docs/nova/migrate-vm.md)
+### [6. Resize VM](docs/nova/resize-vm.md)
 
 ## Keystone
 ### [1. Tổng quan về KeyStone](docs/keystone/keystone-overview.md)
