@@ -2,6 +2,8 @@
 ---
 ## Tổng quát 
 
+![](images/migrate-4.PNG)
+
 Migration là quá trình di chuyển máy ảo từ host vật lí này sang một host vật lí khác. Migration được sinh ra để làm nhiệm vụ bảo trì nâng cấp hệ thống. Ngày nay tính năng này đã được phát triển để thực hiện nhiều tác vụ hơn:
 - Cân bằng tải: Di chuyển VMs tới các host khác kh phát hiện host đang chạy có dấu hiệu quá tải.
 - Bảo trì, nâng cấp hệ thống: Di chuyển các VMs ra khỏi host trước khi tắt nó đi.
@@ -78,7 +80,7 @@ Live migrate
   - Khó migrate với những máy ảo có dung lượng bộ nhớ lớn và trường hợp hai host khác CPU.
 
 Bảng so sánh
-pic 1
+![](images/migrate-1.PNG)
 
 ## Hướng dẫn cấu hình cold migrate trong OpenStack
 > Sử dụng SSH Tunneling để migrate hoặc resize VM
@@ -249,7 +251,9 @@ nova live-migration --block-migrate vm04 compute1
 
 ### Workflow Live migrate
 
-pic 2 3
+![](images/migrate-2.PNG)
+
+![](images/migrate-3.PNG)
 
 
 ## Lưu ý:
