@@ -113,7 +113,7 @@
 - Sinh UUID
   ```
   [root@ceph-aio ~]# uuidgen
-75fcfc41-ee46-458c-880a-adbc91b385a3
+  75fcfc41-ee46-458c-880a-adbc91b385a3
   ```
 
 ### Tạo Controller 
