@@ -6,6 +6,7 @@ Ghi chép cho tôi về OpenStack
 ### [1. Tổng quan về OpenStack](docs/openstack-overview.md)
 ### [2. RBAC - Điều khiển truy cập trên cơ sở vai trò](docs/keystone/rbac.md)
 ### [3. Custom role openstack](docs/lt/role-policy-ops.md)
+### [4. Ceph x OpenStack (nova, cinder, glance)](docs/ops-ceph/docs.md)
 
 ## Cài đặt OPENSTACK 
 ### [1. Cài đặt PackStack Queen](docs/manual/packstack/queens.md) 
@@ -19,7 +20,12 @@ Ghi chép cho tôi về OpenStack
 ### [2. Luồng tạo VM](docs/nova/work-flow-launch-instance.md)
 ### [3. Overcommit Openstack](docs/nova/overcommit.md)
 ### [4. Quotas Openstack](docs/nova/quotas.md)
+<<<<<<< HEAD
 ### [5. Cấu hình Nova manual](docs/nova/quotas.md)
+=======
+### [5. Migrate VM](docs/nova/migrate-vm.md)
+### [6. Resize VM](docs/nova/resize-vm.md)
+>>>>>>> a0d35e61dd788e3b6a6f3f2f09dda3e62bf9b830
 
 ## Keystone
 ### [1. Tổng quan về KeyStone](docs/keystone/keystone-overview.md)
