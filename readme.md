@@ -19,6 +19,7 @@ Ghi chép cho tôi về OpenStack
 ### [2. Luồng tạo VM](docs/nova/work-flow-launch-instance.md)
 ### [3. Overcommit Openstack](docs/nova/overcommit.md)
 ### [4. Quotas Openstack](docs/nova/quotas.md)
+### [5. Cấu hình Nova manual](docs/nova/quotas.md)
 
 ## Keystone
 ### [1. Tổng quan về KeyStone](docs/keystone/keystone-overview.md)

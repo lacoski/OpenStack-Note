@@ -222,7 +222,7 @@ systemctl enable openstack-nova-api.service openstack-nova-consoleauth.service o
 systemctl start openstack-nova-api.service openstack-nova-consoleauth.service openstack-nova-scheduler.service   openstack-nova-conductor.service openstack-nova-novncproxy.service
 ```
 
-### Cấu hình tại Compute node
+### Thiết lập tại Compute node
 #### Cài đặt, cấu hình các thành phân
 
 Cài đặt các gói:
