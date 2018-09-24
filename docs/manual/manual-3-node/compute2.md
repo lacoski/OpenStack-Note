@@ -1,11 +1,10 @@
 # Cấu hình IP
-vlan mgnt : ens160 : 10.10.10.13
-vlan data-vm : ens192 10.10.11.13
-vlan provider: ens224: 10.10.12.13
-
+vlan mgnt : eno1: 172.16.4.123
+vlan data-vm : ens1f1: 10.10.12.123
+vlan provider: eno2: 10.10.11.123
 
 # Set hostname
-hostnamectl set-hostname compute1
+hostnamectl set-hostname compute2
 
 #Cấu hình các mode sysctl
 
@@ -281,28 +280,4 @@ systemctl restart libvirtd.service openstack-nova-compute
 systemctl enable neutron-linuxbridge-agent.service neutron-dhcp-agent.service neutron-metadata-agent.service
 systemctl restart neutron-linuxbridge-agent.service neutron-dhcp-agent.service neutron-metadata-agent.service
   
-## Hướng dẫn launch instance kiểm tra 
-
-#Tạo network 
-. admin-openrc
-
-openstack network create  --share --external \
-  --provider-physical-network provider \
-  --provider-network-type flat provider
-
-openstack subnet create --network provider \
-  --allocation-pool start=172.16.3.180,end=172.16.3.199 \
-  --dns-nameserver 8.8.8.8 --gateway 172.16.10.1 \
-  --subnet-range 172.16.3.0/20 provider
-  
-# Tạo flavor
-
-openstack flavor create --id 0 --vcpus 1 --ram 64 --disk 1 m1.nano
-
-# Tạo securitygroup rule 
-
-openstack security group rule create --proto icmp default
-openstack security group rule create --proto tcp --dst-port 22 default
-
-
 # Truy cập dashboard ở địa chỉ http://10.10.10.11 và tạo máy ảo

@@ -1,9 +1,10 @@
 # Tài liệu cài đặt OpenStack trên Controller
-
+---
+## Cài 
 ### Cấu hình IP
-vlan mgnt : ens160 : 172.16.4.125
-vlan data-vm : ens192 10.10.12.125
-vlan provider: ens224: 10.10.12.11
+vlan mgnt : eno1: 172.16.4.125
+vlan data-vm : ens1f1: 10.10.12.125
+vlan provider: eno2: 10.10.11.125
 
 
 ### Set hostname
