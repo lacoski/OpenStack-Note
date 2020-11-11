@@ -634,14 +634,22 @@ EOF
 Lưu ý:
 - Sau bước này cấu hình Keystone trên CTL 2 và 3
 
-Sau khi cấu hình Keystone đủ trên 3 node, thực hiện lấy token 5 lần, nếu lỗi kiểm tra log keystone
+Sau khi cấu hình Keystone đủ trên 3 node, thực hiện test như sau
 
+Test theo test case sau:
+- Bật HTTPD tại CTL 1, tắt HTTP trên CTL 2 3, lấy token
+- Bật HTTPD tại CTL 2, tắt HTTP trên CTL 1 3, lấy token
+- Bật HTTPD tại CTL 3, tắt HTTP trên CTL 1 2, lấy token
+
+Bảo đảm các test case đều pass
+
+systemctl stop httpd
 source admin-openrc
 openstack token issue
 
-## Cài glance
+## Phần X: Cài đặt Glance
 
-# Tạo db
+### Tạo db
 
 mysql -u root -pWelcome123
 
@@ -656,14 +664,16 @@ GRANT ALL PRIVILEGES ON glance.* TO 'glance'@'%' \
 GRANT ALL PRIVILEGES ON glance.* TO 'glance'@'ctl01' IDENTIFIED BY 'Welcome123';FLUSH PRIVILEGES;
 GRANT ALL PRIVILEGES ON glance.* TO 'glance'@'ctl02' IDENTIFIED BY 'Welcome123';FLUSH PRIVILEGES;
 GRANT ALL PRIVILEGES ON glance.* TO 'glance'@'ctl03' IDENTIFIED BY 'Welcome123';FLUSH PRIVILEGES;
+exit
 
-# Tạo user
+### Tạo user
+
 openstack user create --domain default --password Welcome123 glance
 openstack role add --project service --user glance admin
 openstack service create --name glance \
   --description "OpenStack Image" image
 
-# Tạo endpoint
+### Tạo endpoint
 
 openstack endpoint create --region RegionOne \
   image public http://10.10.11.93:9292
@@ -672,9 +682,11 @@ openstack endpoint create --region RegionOne \
 openstack endpoint create --region RegionOne \
   image internal http://10.10.11.93:9292
 
-# Cài packages
+### Cài packages (Thực hiện trên tất cả CTL)
 
 yum install -y openstack-glance
+
+### Cấu hình Glance
 
 cp /etc/glance/glance-api.conf /etc/glance/glance-api.conf.org 
 rm -rf /etc/glance/glance-api.conf
@@ -753,34 +765,64 @@ chown root:glance /etc/glance/glance-registry.conf
 
 su -s /bin/sh -c "glance-manage db_sync" glance
 
-# Enable và start dịch vụ 
+### Enable và start dịch vụ 
+
 systemctl enable openstack-glance-api.service \
   openstack-glance-registry.service
 
 systemctl start openstack-glance-api.service \
   openstack-glance-registry.service
 
-Lưu ý: Yêu cầu thực hiện xong bước cấu hình cho glance-api và glance-registry trên 2 node còn lại
+### Download và tạo image
 
-# Download và tạo image
 wget http://download.cirros-cloud.net/0.3.5/cirros-0.3.5-x86_64-disk.img
 openstack image create "cirros" \
   --file cirros-0.3.5-x86_64-disk.img \
   --disk-format qcow2 --container-format bare \
   --public
 
+Sau bước này cấu hình glance tại CTL 2 và CTL 3
+
+Sau khi cấu hình glance tại CTL 2 và CTL 3 xong
+
+Lưu ý: Yêu cầu thực hiện xong bước cấu hình cho glance-api và glance-registry trên 2 node còn lại
+
 Lưu ý: Sau khi tạo images, mặc định image sẽ được đưa vào thư mục /var/lib/glance/images trên 1 trong 3 node, ta cần scp image này sang 2 node còn lại vào chính thư mục đó, đồng thời phân quyền
-Ví dụ image 658b6809-7a43-46ae-93cc-e41036df8fe3 nằm ở node ctl3
-scp 658b6809-7a43-46ae-93cc-e41036df8fe3 root@ctl01:/var/lib/glance/images/
-scp 658b6809-7a43-46ae-93cc-e41036df8fe3 root@ctl02:/var/lib/glance/images/
-scp 658b6809-7a43-46ae-93cc-e41036df8fe3 root@ctl03:/var/lib/glance/images/
+Ví dụ image a89941cd-6319-4958-9a51-27a55a47d926 nằm ở node ctl1
+
+[root@ctl01 ~]# ls /var/lib/glance/images
+a89941cd-6319-4958-9a51-27a55a47d926
+
+cd /var/lib/glance/images
+
+scp a89941cd-6319-4958-9a51-27a55a47d926 root@ctl01:/var/lib/glance/images/
+scp a89941cd-6319-4958-9a51-27a55a47d926 root@ctl02:/var/lib/glance/images/
+scp a89941cd-6319-4958-9a51-27a55a47d926 root@ctl03:/var/lib/glance/images/
 
 Lưu ý: Thực hiện trên cả CTL 2 và CTL 3
 chown -R glance:glance /var/lib/glance/images
 
-## Cài Nova
+Test theo test case sau:
+- Bật Glance services tại CTL 1, tắt Glance services trên CTL 2 3, get list image
+- Bật Glance services tại CTL 2, tắt Glance services trên CTL 1 3, get list image
+- Bật Glance services tại CTL 3, tắt Glance services trên CTL 1 2, get list image
 
-# Tạo db
+Bảo đảm các test case đều pass
+
+systemctl stop openstack-glance-api.service \
+  openstack-glance-registry.service
+openstack image list
+
+## Phần X: Cài đặt Nova
+
+### Cài gói (Thực hiện trên tất cả CTL)
+
+yum install -y openstack-nova-api openstack-nova-conductor \
+  openstack-nova-console openstack-nova-novncproxy \
+  openstack-nova-scheduler openstack-nova-placement-api
+
+
+### Tạo db
 mysql -u root -pWelcome123
 
 CREATE DATABASE nova_api;
@@ -812,9 +854,10 @@ GRANT ALL PRIVILEGES ON nova_cell0.* TO 'nova'@'%' \
 GRANT ALL PRIVILEGES ON nova_cell0.* TO 'nova'@'ctl01' IDENTIFIED BY 'Welcome123';FLUSH PRIVILEGES;
 GRANT ALL PRIVILEGES ON nova_cell0.* TO 'nova'@'ctl02' IDENTIFIED BY 'Welcome123';FLUSH PRIVILEGES;
 GRANT ALL PRIVILEGES ON nova_cell0.* TO 'nova'@'ctl03' IDENTIFIED BY 'Welcome123';FLUSH PRIVILEGES;
+exit
 
+### Tạo user và endpoint
 
-# Tạo user và endpoint
 openstack user create --domain default --password Welcome123 nova
 openstack role add --project service --user nova admin
 openstack service create --name nova \
@@ -836,9 +879,7 @@ openstack endpoint create --region RegionOne placement admin http://10.10.11.93:
 openstack endpoint create --region RegionOne placement internal http://10.10.11.93:8778
 
 
-yum install -y openstack-nova-api openstack-nova-conductor \
-  openstack-nova-console openstack-nova-novncproxy \
-  openstack-nova-scheduler openstack-nova-placement-api
+### Cấu hình nova
 
 cp /etc/nova/nova.conf /etc/nova/nova.conf.org 
 rm -rf /etc/nova/nova.conf
@@ -947,7 +988,7 @@ novncproxy_base_url = http://10.10.11.93:6080/vnc_auto.html
 [xvp]
 EOF
 
-# Thêm vào file 00-nova-placement-api.conf 
+### Thêm vào file 00-nova-placement-api.conf 
 cat << 'EOF' >> /etc/httpd/conf.d/00-nova-placement-api.conf
 
 <Directory /usr/bin>
@@ -962,19 +1003,19 @@ cat << 'EOF' >> /etc/httpd/conf.d/00-nova-placement-api.conf
 EOF
 
 
-# Cấu hình bind port cho nova-placement
+### Cấu hình bind port cho nova-placement
 sed -i -e 's/VirtualHost \*/VirtualHost 10.10.11.87/g' /etc/httpd/conf.d/00-nova-placement-api.conf
 sed -i -e 's/Listen 8778/Listen 10.10.11.87:8778/g' /etc/httpd/conf.d/00-nova-placement-api.conf
 
 systemctl restart httpd
 
-# sync db
+### sync db
 su -s /bin/sh -c "nova-manage api_db sync" nova
 su -s /bin/sh -c "nova-manage cell_v2 map_cell0" nova
 su -s /bin/sh -c "nova-manage cell_v2 create_cell --name=cell1 --verbose" nova
 su -s /bin/sh -c "nova-manage db sync" nova
 
-# Enable và start
+### Enable và start
 systemctl enable openstack-nova-api.service \
   openstack-nova-scheduler.service openstack-nova-consoleauth.service \
   openstack-nova-conductor.service openstack-nova-novncproxy.service
@@ -985,9 +1026,33 @@ systemctl restart openstack-nova-api.service \
 
 openstack compute service list
 
-## Cài neutron
+Lưu ý:
+- Sau bước này cấu hình Nova trên các node CTL còn lại
 
-# Tạo db
+Test theo test case sau:
+- Bật Nova services tại CTL 1, tắt Nova services trên CTL 2 3, list nova services
+- Bật Nova services tại CTL 2, tắt Nova services trên CTL 1 3, list nova services
+- Bật Nova services tại CTL 3, tắt Nova services trên CTL 1 2, list nova services
+
+Bảo đảm các test case đều pass
+
+systemctl stop openstack-nova-api.service \
+  openstack-nova-scheduler.service openstack-nova-consoleauth.service \
+  openstack-nova-conductor.service openstack-nova-novncproxy.service
+
+openstack compute service list
+
+## Phần X: Cài neutron
+
+### Cài packages (Thực hiện trên tất cả CTL)
+
+yum install openstack-neutron openstack-neutron-ml2 openstack-neutron-linuxbridge ebtables -y
+
+Lưu ý:
+- DHCP agent và metadata agent được chạy trên node compute
+
+
+### Tạo db
 mysql -u root -pWelcome123
 CREATE DATABASE neutron;
 GRANT ALL PRIVILEGES ON neutron.* TO 'neutron'@'localhost' \
@@ -997,8 +1062,9 @@ GRANT ALL PRIVILEGES ON neutron.* TO 'neutron'@'%' \
 GRANT ALL PRIVILEGES ON neutron.* TO 'neutron'@'ctl01' IDENTIFIED BY 'Welcome123';FLUSH PRIVILEGES;
 GRANT ALL PRIVILEGES ON neutron.* TO 'neutron'@'ctl02' IDENTIFIED BY 'Welcome123';FLUSH PRIVILEGES;
 GRANT ALL PRIVILEGES ON neutron.* TO 'neutron'@'ctl03' IDENTIFIED BY 'Welcome123';FLUSH PRIVILEGES;
+exit
 
-# Tạo user, endpoint trên 1 node
+### Tạo user, endpoint trên 1 node
 
 openstack user create --domain default --password Welcome123 neutron
 openstack role add --project service --user neutron admin
@@ -1012,14 +1078,10 @@ openstack endpoint create --region RegionOne \
 openstack endpoint create --region RegionOne \
   network admin http://10.10.11.93:9696
 
-# Cài packages
-yum install openstack-neutron openstack-neutron-ml2 openstack-neutron-linuxbridge ebtables -y
 
-DHCP agent và metadata agent được chạy trên node compute
-
+### Cấu hình
 cp /etc/neutron/neutron.conf /etc/neutron/neutron.conf.org
 rm -rf /etc/neutron/neutron.conf
-
 
 cat << EOF >> /etc/neutron/neutron.conf
 [DEFAULT]
@@ -1074,7 +1136,7 @@ rabbit_ha_queues = true
 [ssl]
 EOF
 
-# Cấu hình file ml2
+### Cấu hình file ml2
 cp /etc/neutron/plugins/ml2/ml2_conf.ini /etc/neutron/plugins/ml2/ml2_conf.ini.org
 rm -rf /etc/neutron/plugins/ml2/ml2_conf.ini
 
@@ -1098,7 +1160,7 @@ vni_ranges = 1:1000
 enable_ipset = True
 EOF
 
-# Cấu hình file LB agent
+### Cấu hình file LB agent
 
 cp /etc/neutron/plugins/ml2/linuxbridge_agent.ini /etc/neutron/plugins/ml2/linuxbridge_agent.ini.org 
 rm -rf /etc/neutron/plugins/ml2/linuxbridge_agent.ini
@@ -1119,7 +1181,7 @@ local_ip = 10.10.14.87
 l2_population = true
 EOF
 
-# Cấu hình trên file l3 agent
+### Cấu hình trên file l3 agent
 
 cp /etc/neutron/l3_agent.ini /etc/neutron/l3_agent.ini.org
 rm -rf /etc/neutron/l3_agent.ini
@@ -1131,7 +1193,7 @@ interface_driver = neutron.agent.linux.interface.BridgeInterfaceDriver
 [ovs]
 EOF
 
-# Chỉnh sửa file /etc/nova/nova.conf
+### Chỉnh sửa file /etc/nova/nova.conf
 
 [neutron]
 url = http://10.10.11.93:9696
@@ -1146,26 +1208,28 @@ password = Welcome123
 service_metadata_proxy = true
 metadata_proxy_shared_secret = Welcome123
 
-# Restart lại dv nova
+### Restart lại dv nova
 
 systemctl restart openstack-nova-api.service openstack-nova-scheduler.service openstack-nova-consoleauth.service openstack-nova-conductor.service openstack-nova-novncproxy.service
 
-# Phần quyền
+### Phần quyền
 chown -R root:neutron /etc/neutron/
 
-# Tạo liên kết
+### Tạo liên kết
 ln -s /etc/neutron/plugins/ml2/ml2_conf.ini /etc/neutron/plugin.ini
 
-# Sync db
+### Sync db
 su -s /bin/sh -c "neutron-db-manage --config-file /etc/neutron/neutron.conf --config-file /etc/neutron/plugins/ml2/ml2_conf.ini upgrade head" neutron
 
 
-# Enable và start dịch vụ 
+### Enable và start dịch vụ 
 
 systemctl enable neutron-server.service neutron-linuxbridge-agent.service neutron-l3-agent.service
 systemctl restart neutron-server.service neutron-linuxbridge-agent.service neutron-l3-agent.service
 
 openstack network agent list
+
+Sau bước này cấu hình neutron tại CTL 2 và CTL 3
 
 ## Cấu hình horizon
 

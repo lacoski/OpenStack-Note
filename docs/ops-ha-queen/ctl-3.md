@@ -480,11 +480,14 @@ chown -R keystone:keystone /etc/keystone/credential-keys /etc/keystone/fernet-ke
 systemctl enable httpd.service
 systemctl start httpd.service
 
-## Cài glance 
+Sau bước này trở lại CTL 1
 
-# Cài packages 
+## Phần X: Cài đặt Glance
+
+### Cài packages (Thực hiện trên tất cả CTL)
 yum install -y openstack-glance
 
+### Cấu hình Glance
 cp /etc/glance/glance-api.conf /etc/glance/glance-api.conf.org 
 rm -rf /etc/glance/glance-api.conf
 
@@ -556,12 +559,12 @@ flavor = keystone
 [profiler]
 EOF
 
-# Phân quyền
+### Phân quyền
 
 chown root:glance /etc/glance/glance-api.conf
 chown root:glance /etc/glance/glance-registry.conf
 
-# Enable và start dịch vụ
+### Enable và start dịch vụ
 Lưu ý: Yêu cầu thực hiện xong bước sync db trên node controller1 
 systemctl enable openstack-glance-api.service \
   openstack-glance-registry.service
@@ -572,16 +575,20 @@ systemctl start openstack-glance-api.service \
 Lưu ý: Thực hiện sau khi up image sau khi scp Image giữa các CTL
 chown -R glance:glance /var/lib/glance/images
 
-## Cài nova
+Sau bước này trở lại CTL 1
 
-# Tải packages
+## Phần X: Cài đặt Nova
+
+### Cài gói (Thực hiện trên tất cả CTL)
+
 yum install -y openstack-nova-api openstack-nova-conductor \
   openstack-nova-console openstack-nova-novncproxy \
   openstack-nova-scheduler openstack-nova-placement-api
 
-# Cấu hình nova
+### Cấu hình nova
 
 Lưu ý: Yêu cầu thực hiện xong bước tạo endpoint trên node controller1
+
 cp /etc/nova/nova.conf /etc/nova/nova.conf.org 
 rm -rf /etc/nova/nova.conf
 
@@ -689,7 +696,7 @@ novncproxy_base_url = http://10.10.11.93:6080/vnc_auto.html
 [xvp]
 EOF
 
-# Thêm vào file 00-nova-placement-api.conf 
+### Thêm vào file 00-nova-placement-api.conf 
 cat << 'EOF' >> /etc/httpd/conf.d/00-nova-placement-api.conf
 
 <Directory /usr/bin>
@@ -703,9 +710,12 @@ cat << 'EOF' >> /etc/httpd/conf.d/00-nova-placement-api.conf
 </Directory>
 EOF
 
-# Cấu hình bind port cho nova-placement
+### Cấu hình bind port cho nova-placement
 sed -i -e 's/VirtualHost \*/VirtualHost 10.10.11.89/g' /etc/httpd/conf.d/00-nova-placement-api.conf
 sed -i -e 's/Listen 8778/Listen 10.10.11.89:8778/g' /etc/httpd/conf.d/00-nova-placement-api.conf
+systemctl restart httpd
+
+### Enable và start
 
 systemctl enable openstack-nova-api.service \
   openstack-nova-scheduler.service openstack-nova-consoleauth.service \
@@ -715,17 +725,20 @@ systemctl start openstack-nova-api.service \
   openstack-nova-scheduler.service openstack-nova-consoleauth.service \
   openstack-nova-conductor.service openstack-nova-novncproxy.service
 
-## Cài đặt neutron
+Sau bước này trở về CTL 1
 
-# Cài packages
+## Phần X: Cài neutron
+
+### Cài packages (Thực hiện trên tất cả CTL)
 
 yum install openstack-neutron openstack-neutron-ml2 openstack-neutron-linuxbridge ebtables -y
 
 DHCP agent và metadata agent được chạy trên node compute
 
+### Cấu hình
+
 cp /etc/neutron/neutron.conf /etc/neutron/neutron.conf.org
 rm -rf /etc/neutron/neutron.conf
-
 
 cat << EOF >> /etc/neutron/neutron.conf
 [DEFAULT]
