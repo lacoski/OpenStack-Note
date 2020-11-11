@@ -11,3 +11,4 @@ https://devopsviet.com/2020/05/17/huong-dan-cai-dat-galera-3-node-tren-centos-7/
 ### Bước 3: Triển khai RabbitMQ Cluster
 
 https://devopsviet.com/2020/05/17/high-availability-huong-dan-trien-khai-rabbit-cluster-tren-centos-7/
+

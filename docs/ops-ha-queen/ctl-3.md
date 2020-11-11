@@ -1,3 +1,17 @@
+# Cài đặt CTL 3
+
+## Phần 1: Chuẩn bị
+
+### Phân hoạch
+
+VIP MNGT: 10.10.11.94
+
+vlan mgnt: eth0: 10.10.11.89
+vlan provider: eth1: 10.10.12.89
+vlan datavm: eth2: 10.10.14.89
+
+### Setup node
+
 hostnamectl set-hostname ctl03
 
 echo "Setup IP eth0"
@@ -31,7 +45,9 @@ systemctl enable chronyd.service
 systemctl restart chronyd.service
 chronyc sources
 
-## Chuẩn bị sysctl
+init 6
+
+### Chuẩn bị sysctl
 
 echo 'net.ipv4.conf.all.arp_ignore = 1'  >> /etc/sysctl.conf
 echo 'net.ipv4.conf.all.arp_announce = 2'  >> /etc/sysctl.conf
@@ -50,19 +66,25 @@ EOF
 
 sysctl -p
 
-## Cấu hình hostname
+### Cấu hình hostname
 
 echo "10.10.11.87 ctl01" >> /etc/hosts
 echo "10.10.11.88 ctl02" >> /etc/hosts
 echo "10.10.11.89 ctl03" >> /etc/hosts
+echo "10.10.11.94 com01" >> /etc/hosts
 
-## Setup keypair
+### Setup keypair
 
 ssh-keygen -t rsa -f /root/.ssh/id_rsa -q -P ""
 ssh-copy-id -o StrictHostKeyChecking=no -i /root/.ssh/id_rsa.pub root@ctl01
 ssh-copy-id -o StrictHostKeyChecking=no -i /root/.ssh/id_rsa.pub root@ctl02
 
-## Galera
+Lưu ý:
+- Snapshot prenv
+
+## Phần 2: Setup Galera
+
+### Setup repo và Cài đặt MariaDB (Trên tất cả CTL)
 
 echo '[mariadb]
 name = MariaDB
@@ -73,10 +95,9 @@ yum -y update
 
 yum install -y mariadb mariadb-server
 yum install -y galera rsync
-yum install -y galera rsync
 systemctl stop mariadb
 
-
+### Cấu hình
 cp /etc/my.cnf.d/server.cnf /etc/my.cnf.d/server.cnf.bak
 
 echo '[server]
@@ -105,8 +126,16 @@ wsrep_sst_method=rsync
 [mariadb-10.2]
 ' > /etc/my.cnf.d/server.cnf
 
+### Khởi tạo Cluster
+
+Lưu ý:
+- Chỉ chạy khi đã khởi tạo galera_new_cluster tại CTL1
+
 systemctl start mariadb
 systemctl enable mariadb
+
+Lưu ý:
+- Trở lại CTL1 và chờ tới thao tác tiếp theo
 
 ## Cấu hình cho haproxy check mysql
 yum install rsync xinetd crudini git -y
@@ -145,14 +174,16 @@ Content-Length: 40
 
 Percona XtraDB Cluster Node is synced.
 
-## RabbitMQ Cluster 
-Cài đặt môi trường
+Lưu ý:
+- Trở lại CTL1 và chờ tới thao tác tiếp theo
+
+## Phần X: Cài đặt RabbitMQ Cluster
+
+### Cài đặt môi trường và RabbitMQ (Trên tất cả CTL)
 
 yum -y install epel-release
 yum update -y
 yum -y install erlang socat wget
-
-Cài đặt gói RabbitMQ
 
 wget https://www.rabbitmq.com/releases/rabbitmq-server/v3.6.10/rabbitmq-server-3.6.10-1.el7.noarch.rpm
 rpm --import https://www.rabbitmq.com/rabbitmq-release-signing-key.asc
@@ -165,6 +196,8 @@ systemctl status rabbitmq-server
 rabbitmq-plugins enable rabbitmq_management
 chown -R rabbitmq:rabbitmq /var/lib/rabbitmq/
 
+### Join Cluster RabbitMQ
+
 chown rabbitmq:rabbitmq /var/lib/rabbitmq/.erlang.cookie
 chmod 400 /var/lib/rabbitmq/.erlang.cookie
 
@@ -174,7 +207,12 @@ rabbitmqctl stop_app
 rabbitmqctl join_cluster rabbit@ctl01
 rabbitmqctl start_app
 
-## Triển khai PCS
+Lưu ý:
+- Trở lại CTL1 và chờ tới thao tác tiếp theo
+
+## Phần X: Triển khai PCS
+
+### Chuẩn bị môi trường (Trên tất cả các node)
 
 yum install pacemaker corosync haproxy pcs fence-agents-all resource-agents psmisc policycoreutils-python -y
 
@@ -183,6 +221,8 @@ echo Welcome123 | passwd --stdin hacluster
 systemctl enable pcsd.service pacemaker.service corosync.service haproxy.service
 
 systemctl start pcsd.service
+
+Sau bước này tới CTL2 và CTL3 join cluster RabbitMQ
 
 ## Config HAProxy
 
@@ -351,13 +391,17 @@ listen horizon
     server controller3 10.10.11.89:80  weight 1 check
 EOF
 
-## Cài đặt các gói cần thiết
+Sau bước này trở lại CTL 1
+
+## Phần X: Cài đặt các gói cần thiết cho OPS (Trên tất cả các node)
 
 yum -y install centos-release-openstack-queens
 yum -y install crudini wget vim
 yum -y install python-openstackclient openstack-selinux python2-PyMySQL
 
-## Cấu hình memcache
+Sau bước này trở lại CTL 1
+
+## Phần X: Cấu hình memcache
 
 yum install -y memcached
 
@@ -366,7 +410,9 @@ sed -i "s/-l 127.0.0.1,::1/-l 10.10.11.89/g" /etc/sysconfig/memcached
 systemctl enable memcached.service
 systemctl restart memcached.service
 
-## Cài đặt Keystone
+Sau bước này trở lại CTL 1
+
+## Phần X: Cài đặt Keystone
 
 ### Cài packages
 yum install openstack-keystone httpd mod_wsgi -y
@@ -522,6 +568,9 @@ systemctl enable openstack-glance-api.service \
 
 systemctl start openstack-glance-api.service \
   openstack-glance-registry.service
+
+Lưu ý: Thực hiện sau khi up image sau khi scp Image giữa các CTL
+chown -R glance:glance /var/lib/glance/images
 
 ## Cài nova
 
@@ -744,11 +793,11 @@ tenant_network_types = vxlan
 mechanism_drivers = linuxbridge,l2population
 extension_drivers = port_security,qos
 [ml2_type_flat]
-flat_networks = external
+flat_networks = provider
 [ml2_type_geneve]
 [ml2_type_gre]
 [ml2_type_vlan]
-network_vlan_ranges = provider
+#network_vlan_ranges = provider
 [ml2_type_vxlan]
 vni_ranges = 1:1000
 [securitygroup]

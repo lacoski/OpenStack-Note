@@ -1,3 +1,17 @@
+# Cài đặt CTL 1
+
+## Phần 1: Chuẩn bị
+
+### Phân hoạch
+
+Quy hoạch Network:
+- VIP MNGT: 10.10.11.94
+- vlan mgnt: eth0: 10.10.11.87
+- vlan provider: eth1: 10.10.12.87
+- vlan datavm: eth2: 10.10.14.87
+
+### Setup node
+
 hostnamectl set-hostname ctl01
 
 echo "Setup IP eth0"
@@ -31,7 +45,9 @@ systemctl enable chronyd.service
 systemctl restart chronyd.service
 chronyc sources
 
-## Chuẩn bị sysctl
+init 6
+
+### Chuẩn bị sysctl
 
 echo 'net.ipv4.conf.all.arp_ignore = 1'  >> /etc/sysctl.conf
 echo 'net.ipv4.conf.all.arp_announce = 2'  >> /etc/sysctl.conf
@@ -50,19 +66,25 @@ EOF
 
 sysctl -p
 
-## Cấu hình hostname
+### Cấu hình hostname
 
 echo "10.10.11.87 ctl01" >> /etc/hosts
 echo "10.10.11.88 ctl02" >> /etc/hosts
 echo "10.10.11.89 ctl03" >> /etc/hosts
+echo "10.10.11.94 com01" >> /etc/hosts
 
-## Setup keypair
+### Setup keypair
 
 ssh-keygen -t rsa -f /root/.ssh/id_rsa -q -P ""
 ssh-copy-id -o StrictHostKeyChecking=no -i /root/.ssh/id_rsa.pub root@ctl02
 ssh-copy-id -o StrictHostKeyChecking=no -i /root/.ssh/id_rsa.pub root@ctl03
 
-## Galera
+Lưu ý:
+- Snapshot prenv
+
+## Phần 2: Setup Galera
+
+### Setup repo và Cài đặt MariaDB (Trên tất cả CTL)
 
 echo '[mariadb]
 name = MariaDB
@@ -74,6 +96,7 @@ yum -y update
 yum install -y mariadb mariadb-server
 systemctl stop mariadb
 
+### Cấu hình
 cp /etc/my.cnf.d/server.cnf /etc/my.cnf.d/server.cnf.bak
 
 echo '[server]
@@ -102,9 +125,25 @@ wsrep_sst_method=rsync
 [mariadb-10.2]
 ' > /etc/my.cnf.d/server.cnf
 
+### Khởi tạo Cluster
+
 galera_new_cluster
 systemctl start mariadb
 systemctl enable mariadb
+
+Lưu ý:
+- Sau bước này thực hiện start mariadb trên CTL2 và CTL3
+
+### Kiểm tra
+
+mysql -u root -e "SHOW STATUS LIKE 'wsrep_cluster_size'"
+
+Kết quả
+```
+mysql -u root -e "SHOW STATUS LIKE 'wsrep_cluster_size'"
+```
+
+### Đặt mật khẩu xác thực Root
 
 password_galera_root=Welcome123
 cat << EOF | mysql -uroot
@@ -120,7 +159,8 @@ GRANT ALL PRIVILEGES ON *.* TO 'root'@'ctl02' IDENTIFIED BY '$password_galera_ro
 GRANT ALL PRIVILEGES ON *.* TO 'root'@'ctl03' IDENTIFIED BY '$password_galera_root';FLUSH PRIVILEGES;
 EOF
 
-## Cấu hình cho haproxy check mysql
+### Cấu hình cho haproxy check mysql
+
 yum install rsync xinetd crudini git -y
 git clone https://github.com/thaonguyenvan/percona-clustercheck
 cp percona-clustercheck/clustercheck /usr/local/bin
@@ -163,16 +203,16 @@ Content-Length: 40
 
 Percona XtraDB Cluster Node is synced.
 
+Lưu ý:
+- Sau bước này thực hiện cài đặt plugin check lên CTL02 và CLT03, làm lần lượt
 
-## RabbitMQ Cluster 
-Cài đặt môi trường
+## Phần X: Cài đặt RabbitMQ Cluster 
+
+### Cài đặt môi trường và RabbitMQ (Trên tất cả CTL)
 
 yum -y install epel-release
 yum update -y
 yum -y install erlang socat wget
-
-
-Cài đặt gói RabbitMQ
 
 wget https://www.rabbitmq.com/releases/rabbitmq-server/v3.6.10/rabbitmq-server-3.6.10-1.el7.noarch.rpm
 rpm --import https://www.rabbitmq.com/rabbitmq-release-signing-key.asc
@@ -186,7 +226,7 @@ rabbitmq-plugins enable rabbitmq_management
 chown -R rabbitmq:rabbitmq /var/lib/rabbitmq/
 
 
-### Cấu hình trên node ctl1
+### Cấu hình cluster trên node ctl1
 
 rabbitmqctl add_user openstack Welcome123
 rabbitmqctl set_permissions openstack ".*" ".*" ".*"
@@ -201,8 +241,22 @@ rabbitmqctl start_app
 
 rabbitmqctl cluster_status
 
+Kết quả
+```
+[root@ctl01 ~]# rabbitmqctl cluster_status
+Cluster status of node rabbit@ctl01
+[{nodes,[{disc,[rabbit@ctl01]}]},
+ {running_nodes,[rabbit@ctl01]},
+ {cluster_name,<<"rabbit@ctl01">>},
+ {partitions,[]},
+ {alarms,[{rabbit@ctl01,[]}]}]
+```
 
-## Triển khai PCS
+Sau bước này tới CTL2 và CTL3 join cluster RabbitMQ
+
+## Phần X: Triển khai PCS
+
+### Chuẩn bị môi trường (Trên tất cả các node)
 
 yum install pacemaker corosync haproxy pcs fence-agents-all resource-agents psmisc policycoreutils-python -y
 
@@ -211,6 +265,8 @@ echo Welcome123 | passwd --stdin hacluster
 systemctl enable pcsd.service pacemaker.service corosync.service haproxy.service
 
 systemctl start pcsd.service
+
+### Cấu hình Cluster
 
 pcs cluster auth ctl01 ctl02 ctl03 -u hacluster -p Welcome123
 pcs cluster setup --name ha_cluster ctl01 ctl02 ctl03
@@ -234,13 +290,11 @@ pcs resource create p_haproxy systemd:haproxy \
 	op start interval=0 timeout=60 \
 	op stop interval=0 timeout=60   
 
-# Tạo ràng buộc và enable các resource VIP và haproxy
-
 pcs constraint colocation add vip_public with p_haproxy score=INFINITY
 pcs constraint order start vip_public then start p_haproxy
 
 
-## Config HAProxy
+### Config HAProxy
 
 cp /etc/haproxy/haproxy.cfg /etc/haproxy/haproxy.cfg.org 
 rm -rf /etc/haproxy/haproxy.cfg
@@ -408,13 +462,21 @@ listen horizon
 EOF
 
 
-## Cài đặt các gói cần thiết
+
+Sau bước này trở lại CTL 2 3 cấu hình HAProxy
+
+Sau khi cấu hình HAProxy xong trên tất cả các node thực hiện
+
+pcs resource restart p_haproxy
+pcs resource cleanup
+
+## Phần X: Cài đặt các gói cần thiết cho OPS (Trên tất cả các node)
 
 yum -y install centos-release-openstack-queens
 yum -y install crudini wget vim
 yum -y install python-openstackclient openstack-selinux python2-PyMySQL
 
-## Cấu hình memcache
+## Phần X: Cấu hình memcache
 
 yum install -y memcached
 
@@ -423,7 +485,10 @@ sed -i "s/-l 127.0.0.1,::1/-l 10.10.11.87/g" /etc/sysconfig/memcached
 systemctl enable memcached.service
 systemctl restart memcached.service
 
-## Cài đặt Keystone
+Lưu ý:
+- Cấu hình lần lượt từ CTL 1 tới CTL 2, CTL 3
+
+## Phần X: Cài đặt Keystone
 
 ### Tạo db
 mysql -u root -pWelcome123
@@ -438,9 +503,10 @@ GRANT ALL PRIVILEGES ON keystone.* TO 'keystone'@'ctl02' IDENTIFIED BY 'Welcome1
 GRANT ALL PRIVILEGES ON keystone.* TO 'keystone'@'ctl03' IDENTIFIED BY 'Welcome123';FLUSH PRIVILEGES;
 exit
 
-
+### Cài đặt gói (Trên tất cả các node)
 yum install openstack-keystone httpd mod_wsgi -y
 
+### Cấu hình dịch vụ
 cp /usr/share/keystone/wsgi-keystone.conf /etc/httpd/conf.d/
 sed -i -e 's/VirtualHost \*/VirtualHost 10.10.11.87/g' /etc/httpd/conf.d/wsgi-keystone.conf
 sed -i -e 's/Listen 5000/Listen 10.10.11.87:5000/g' /etc/httpd/conf.d/wsgi-keystone.conf
@@ -564,6 +630,14 @@ export OS_AUTH_URL=http://10.10.11.93:5000/v3
 export OS_IDENTITY_API_VERSION=3
 export OS_IMAGE_API_VERSION=2
 EOF
+
+Lưu ý:
+- Sau bước này cấu hình Keystone trên CTL 2 và 3
+
+Sau khi cấu hình Keystone đủ trên 3 node, thực hiện lấy token 5 lần, nếu lỗi kiểm tra log keystone
+
+source admin-openrc
+openstack token issue
 
 ## Cài glance
 
@@ -701,6 +775,8 @@ scp 658b6809-7a43-46ae-93cc-e41036df8fe3 root@ctl01:/var/lib/glance/images/
 scp 658b6809-7a43-46ae-93cc-e41036df8fe3 root@ctl02:/var/lib/glance/images/
 scp 658b6809-7a43-46ae-93cc-e41036df8fe3 root@ctl03:/var/lib/glance/images/
 
+Lưu ý: Thực hiện trên cả CTL 2 và CTL 3
+chown -R glance:glance /var/lib/glance/images
 
 ## Cài Nova
 
@@ -1011,11 +1087,11 @@ tenant_network_types = vxlan
 mechanism_drivers = linuxbridge,l2population
 extension_drivers = port_security,qos
 [ml2_type_flat]
-flat_networks = external
+flat_networks = provider
 [ml2_type_geneve]
 [ml2_type_gre]
 [ml2_type_vlan]
-network_vlan_ranges = provider
+#network_vlan_ranges = provider
 [ml2_type_vxlan]
 vni_ranges = 1:1000
 [securitygroup]
@@ -1159,3 +1235,54 @@ echo "WSGIApplicationGroup %{GLOBAL}" >> /etc/httpd/conf.d/openstack-dashboard.c
 
 # Restart lại httpd
 systemctl restart httpd.service memcached.service
+
+
+## Yêu cầu:
+- HA Cinder cần có Ceph
+
+## Cấu hình Cinder
+
+# Tao db
+
+mysql -u root -pWelcome123
+CREATE DATABASE cinder;
+GRANT ALL PRIVILEGES ON cinder.* TO 'cinder'@'localhost' \
+  IDENTIFIED BY 'Welcome123';
+GRANT ALL PRIVILEGES ON cinder.* TO 'cinder'@'%' \
+  IDENTIFIED BY 'Welcome123'; 
+
+GRANT ALL PRIVILEGES ON cinder.* TO 'cinder'@'ctl01' IDENTIFIED BY 'Welcome123';FLUSH PRIVILEGES;
+GRANT ALL PRIVILEGES ON cinder.* TO 'cinder'@'ctl02' IDENTIFIED BY 'Welcome123';FLUSH PRIVILEGES;
+GRANT ALL PRIVILEGES ON cinder.* TO 'cinder'@'ctl03' IDENTIFIED BY 'Welcome123';FLUSH PRIVILEGES;
+
+
+# Tao endpoint
+
+openstack user create --domain default --password Welcome123 cinder
+openstack role add --project service --user cinder admin
+
+openstack service create --name cinderv2 \
+  --description "OpenStack Block Storage" volumev2  
+openstack service create --name cinderv3 \
+  --description "OpenStack Block Storage" volumev3
+  
+openstack endpoint create --region RegionOne \
+  volumev2 public http://10.10.11.93:8776/v2/%\(project_id\)s
+openstack endpoint create --region RegionOne \
+  volumev2 internal http://10.10.11.93:8776/v2/%\(project_id\)s
+openstack endpoint create --region RegionOne \
+  volumev2 admin http://10.10.11.93:8776/v2/%\(project_id\)s
+openstack endpoint create --region RegionOne \
+  volumev3 public http://10.10.11.93:8776/v3/%\(project_id\)s
+openstack endpoint create --region RegionOne \
+  volumev3 internal http://10.10.11.93:8776/v3/%\(project_id\)s
+openstack endpoint create --region RegionOne \
+  volumev3 admin http://10.10.11.93:8776/v3/%\(project_id\)s
+
+# Tai package
+yum install openstack-cinder -y
+
+# Sửa cấu hình cinder
+ 
+cp /etc/cinder/cinder.conf /etc/cinder/cinder.conf.bak 
+rm -rf /etc/cinder/cinder.conf
