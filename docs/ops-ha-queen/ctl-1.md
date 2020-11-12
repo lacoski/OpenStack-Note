@@ -610,19 +610,31 @@ provider = fernet
 [trust]
 EOF
 ```
+
+### Phân quyền
 ```
 chown root:keystone /etc/keystone/keystone.conf
 ```
 
+### Sync db
 ```
 su -s /bin/sh -c "keystone-manage db_sync" keystone
+```
 
+### set up fernet key
+```
 keystone-manage fernet_setup --keystone-user keystone --keystone-group keystone
 keystone-manage credential_setup --keystone-user keystone --keystone-group keystone
+```
 
+### Chuyển 2 thư mục này sang 2 CTL còn lại
+```
 scp -r /etc/keystone/credential-keys /etc/keystone/fernet-keys root@ctl02:/etc/keystone/
 scp -r /etc/keystone/credential-keys /etc/keystone/fernet-keys root@ctl03:/etc/keystone/
+```
 
+### Bootstrap
+```
 keystone-manage bootstrap --bootstrap-password Welcome123 \
   --bootstrap-admin-url http://10.10.11.93:5000/v3/ \
   --bootstrap-internal-url http://10.10.11.93:5000/v3/ \
@@ -630,11 +642,13 @@ keystone-manage bootstrap --bootstrap-password Welcome123 \
   --bootstrap-region-id RegionOne
 ```
 
+### Enable và start httpd
 ```
 systemctl enable httpd.service
 systemctl start httpd.service
 ```
 
+### Export biến mtr
 ```
 export OS_USERNAME=admin
 export OS_PASSWORD=Welcome123
@@ -655,6 +669,7 @@ openstack user create --domain default \
   --password Welcome123 demo
 ```
 
+### Tạo domain, user
 ```
 openstack role create user
 openstack role add --project demo --user demo user
@@ -666,6 +681,7 @@ openstack --os-auth-url http://10.10.11.93:35357/v3 \
   --os-project-name admin --os-username admin token issue
 ```
 
+### Tạo file xác thực 
 ```
 cat << EOF >> admin-openrc
 export OS_PROJECT_DOMAIN_NAME=Default
@@ -695,6 +711,7 @@ Lưu ý:
 
 Sau khi cấu hình Keystone đủ trên 3 node, thực hiện test như sau
 
+### Kiểm tra
 Test theo test case sau:
 - Bật HTTPD tại CTL 1, tắt HTTP trên CTL 2 3, lấy token
 - Bật HTTPD tại CTL 2, tắt HTTP trên CTL 1 3, lấy token
@@ -888,6 +905,8 @@ scp a89941cd-6319-4958-9a51-27a55a47d926 root@ctl03:/var/lib/glance/images/
 
 Lưu ý: Thực hiện trên cả CTL 2 và CTL 3
 chown -R glance:glance /var/lib/glance/images
+
+### Kiểm tra
 
 Test theo test case sau:
 - Bật Glance services tại CTL 1, tắt Glance services trên CTL 2 3, get list image
@@ -1134,7 +1153,9 @@ openstack compute service list
 Lưu ý:
 - Sau bước này cấu hình Nova trên các node CTL còn lại
 
-### Test theo test case sau
+### Kiểm tra
+
+Test theo các use case:
 - Bật Nova services tại CTL 1, tắt Nova services trên CTL 2 3, list nova services
 - Bật Nova services tại CTL 2, tắt Nova services trên CTL 1 3, list nova services
 - Bật Nova services tại CTL 3, tắt Nova services trên CTL 1 2, list nova services
@@ -1364,8 +1385,9 @@ openstack network agent list
 
 Sau bước này cấu hình neutron tại CTL 2 và CTL 3
 
-### Test lại dịch vụ
+### Kiểm tra
 
+Test lại dịch vụ:
 - Bật Neutron service tại CTL 1, tắt Neutron service trên CTL 2 3, list Neutron service
 - Bật Neutron service tại CTL 2, tắt Neutron service trên CTL 1 3, list Neutron service
 - Bật Neutron service tại CTL 3, tắt Neutron service trên CTL 1 2, list Neutron service
@@ -1400,6 +1422,7 @@ cat << EOF >> $filehtml
 </html>
 EOF
 ```
+
 ### Cấu hình Horizon
 ```
 cp /etc/openstack-dashboard/local_settings /etc/openstack-dashboard/local_settings.org

@@ -354,6 +354,21 @@ Kết quả
 +--------------------------------------+--------------------+-------+-------------------+-------+-------+---------------------------+
 ```
 
-Sau bước này truy cập giao diện, cấu hình Network, boot VM
+### Kiểm tra
 
-http://10.10.11.93/
+
+Kiểm tra theo test case:
+- Tắt tất cả service neutron, nova, glance, horizon tại CTL 2 CTL3, test tạo mới với CTL 1 up, thực hiện truy cập giao diện, cấu hình Network, tạo mới Flavor, boot VM http://10.10.11.93/
+- Tắt tất cả service neutron, nova, glance, horizon tại CTL 1 CTL3, test tạo mới với CTL 2 up, thực hiện truy cập giao diện, cấu hình Network, tạo mới Flavor, boot VM http://10.10.11.93/
+- Tắt tất cả service neutron, nova, glance, horizon tại CTL 1 CTL2, test tạo mới với CTL 3 up, thực hiện truy cập giao diện, cấu hình Network, tạo mới Flavor, boot VM http://10.10.11.93/
+- Bật đầy đủ cả 3 node, thực hiện truy cập giao diện, cấu hình Network, tạo mới Flavor, boot VM http://10.10.11.93/
+
+Câu lệnh
+```
+systemctl stop httpd
+systemctl stop openstack-glance-api.service   openstack-glance-registry.service
+systemctl stop openstack-nova-api.service   openstack-nova-scheduler.service openstack-nova-consoleauth.service   openstack-nova-conductor.service openstack-nova-novncproxy.service
+systemctl stop neutron-server.service neutron-linuxbridge-agent.service neutron-l3-agent.service
+```
+
+Boot VM với local disk nova, nếu boot VM nhận network tức đã cấu hình xong Openstack HA cơ bản
