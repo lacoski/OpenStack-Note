@@ -1,10 +1,14 @@
-## Phân hoạch
+# Cài đặt CTL 1
+
+## Phần 1: Chuẩn bị
+
+### Phân hoạch
 
 vlan mgnt: eth0: 10.10.11.94
 vlan provider: eth1: 10.10.12.94
 vlan datavm: eth2: 10.10.14.94
 
-## Setup node
+### Setup node
 
 hostnamectl set-hostname com01
 
@@ -40,7 +44,7 @@ chronyc sources
 
 init 6
 
-## Chuẩn bị sysctl
+### Chuẩn bị sysctl
 
 echo 'net.ipv4.conf.all.arp_ignore = 1'  >> /etc/sysctl.conf
 echo 'net.ipv4.conf.all.arp_announce = 2'  >> /etc/sysctl.conf
@@ -59,22 +63,29 @@ EOF
 
 sysctl -p
 
-## Cấu hình hostname
+### Cấu hình hostname
 
 echo "10.10.11.87 ctl01" >> /etc/hosts
 echo "10.10.11.88 ctl02" >> /etc/hosts
 echo "10.10.11.89 ctl03" >> /etc/hosts
 echo "10.10.11.94 com01" >> /etc/hosts
 
-# Cài đặt các gói cần thiết
+Lưu ý:
+- Snapshot preenv
+
+## Phần X: Cài đặt các gói cần thiết
 
 yum -y install centos-release-openstack-queens
 yum -y install crudini wget vim
 yum -y install python-openstackclient openstack-selinux python2-PyMySQL
 
-# Cài đặt Nova
+## Phần X: Cài đặt Nova
+
+### Cài đặt gói
 
 yum install openstack-nova-compute libvirt-client -y
+
+### Cấu hình nova
 
 cp /etc/nova/nova.conf  /etc/nova/nova.conf.org
 rm -rf /etc/nova/nova.conf
@@ -173,17 +184,42 @@ novncproxy_base_url = http://10.10.11.93:6080/vnc_auto.html
 [xvp]
 EOF
 
-chown root:nova /etc/nova/nova.conf
+### Khởi động dịch vụ
 
+chown root:nova /etc/nova/nova.conf
 systemctl enable libvirtd.service openstack-nova-compute.service
 systemctl restart libvirtd.service openstack-nova-compute.service
 
+Về CTL 1 thực hiện `openstack compute service list`
 
-# Cài Neutron
+Kết quả
+
+[root@ctl01 ~]# openstack compute service list
++----+------------------+-------+----------+---------+-------+----------------------------+
+| ID | Binary           | Host  | Zone     | Status  | State | Updated At                 |
++----+------------------+-------+----------+---------+-------+----------------------------+
+|  3 | nova-scheduler   | ctl01 | internal | enabled | up    | 2020-11-12T06:54:03.000000 |
+|  6 | nova-conductor   | ctl01 | internal | enabled | up    | 2020-11-12T06:54:02.000000 |
+| 12 | nova-consoleauth | ctl01 | internal | enabled | up    | 2020-11-12T06:54:05.000000 |
+| 27 | nova-consoleauth | ctl02 | internal | enabled | up    | 2020-11-12T06:53:58.000000 |
+| 30 | nova-scheduler   | ctl02 | internal | enabled | up    | 2020-11-12T06:53:58.000000 |
+| 33 | nova-conductor   | ctl02 | internal | enabled | up    | 2020-11-12T06:54:05.000000 |
+| 48 | nova-scheduler   | ctl03 | internal | enabled | up    | 2020-11-12T06:54:07.000000 |
+| 48 | nova-scheduler   | ctl03 | internal | enabled | up    | 2020-11-12T06:54:07.000000 |
+| 51 | nova-conductor   | ctl03 | internal | enabled | up    | 2020-11-12T06:54:01.000000 |
+| 54 | nova-consoleauth | ctl03 | internal | enabled | up    | 2020-11-12T06:54:07.000000 |
+| 72 | nova-compute     | com01 | nova     | enabled | up    | 2020-11-12T06:54:07.000000 |
++----+------------------+-------+----------+---------+-------+----------------------------+
+
+## Phần X: Cài đặt Neutron
+
+### Cài đặt gói
+
 yum install openstack-neutron openstack-neutron-ml2 \
   openstack-neutron-linuxbridge ebtables -y
 
-#Cau hinh neutron
+### Cấu hình neutron
+
 cp /etc/neutron/neutron.conf /etc/neutron/neutron.conf.org 
 rm -rf /etc/neutron/neutron.conf
 
@@ -223,7 +259,7 @@ amqp_durable_queues= true
 [ssl]
 EOF
 
-# Cau hinh file LB agent
+### Cấu hình LB Agent
 
 cp /etc/neutron/plugins/ml2/linuxbridge_agent.ini /etc/neutron/plugins/ml2/linuxbridge_agent.ini.org 
 rm -rf /etc/neutron/plugins/ml2/linuxbridge_agent.ini
@@ -245,7 +281,7 @@ l2_population = true
 EOF
 
 
-# Cấu hình dhcp agent
+### Cấu hình DHCP Agent
 
 cp /etc/neutron/dhcp_agent.ini /etc/neutron/dhcp_agent.ini.org
 rm -rf /etc/neutron/dhcp_agent.ini
@@ -261,7 +297,7 @@ force_metadata = True
 EOF
 
 
-# Cấu hình metadata agent
+### Cấu hình metadata agent
 
 cp /etc/neutron/metadata_agent.ini /etc/neutron/metadata_agent.ini.org 
 rm -rf /etc/neutron/metadata_agent.ini
@@ -274,7 +310,7 @@ metadata_proxy_shared_secret = Welcome123
 [cache]
 EOF
 
-# Thêm vào file /etc/nova/nova.conf
+### Thêm vào file /etc/nova/nova.conf
 [neutron]
 url = http://10.10.11.93:9696
 auth_url = http://10.10.11.93:35357
@@ -287,9 +323,33 @@ username = neutron
 password = Welcome123
 
 
+### Phân quyền
+
 chown root:neutron /etc/neutron/metadata_agent.ini /etc/neutron/neutron.conf /etc/neutron/dhcp_agent.ini /etc/neutron/plugins/ml2/linuxbridge_agent.ini
+
+### Khởi động lại dịch vụ nova-compute
 
 systemctl restart libvirtd.service openstack-nova-compute
 
+### Khởi động dịch vụ
+
 systemctl enable neutron-linuxbridge-agent.service neutron-dhcp-agent.service neutron-metadata-agent.service
 systemctl restart neutron-linuxbridge-agent.service neutron-dhcp-agent.service neutron-metadata-agent.service
+
+Sau bước này về CTL thực hiện `openstack network agent list`
+
+Kết quả
+```
+[root@ctl01 ~]# openstack network agent list
+
++--------------------------------------+--------------------+-------+-------------------+-------+-------+---------------------------+
+| ID                                   | Agent Type         | Host  | Availability Zone | Alive | State | Binary                    |
++--------------------------------------+--------------------+-------+-------------------+-------+-------+---------------------------+
+| 313859ec-a3a9-4557-8dab-48d9cb404eb8 | DHCP agent         | com01 | nova              | :-)   | UP    | neutron-dhcp-agent        |
+| 4791b094-781b-4ddb-b231-7e0118662a9e | Metadata agent     | com01 | None              | :-)   | UP    | neutron-metadata-agent    |
+| 94a6bd7c-14b3-4c35-af99-add86bf86b99 | Linux bridge agent | ctl01 | None              | :-)   | UP    | neutron-linuxbridge-agent |
+| 9e2a14c9-569e-4281-a2e4-271d2eb5bea4 | Linux bridge agent | ctl03 | None              | :-)   | UP    | neutron-linuxbridge-agent |
+| de83f310-b65a-4bad-bff6-cf28cde7b4b3 | Linux bridge agent | com01 | None              | :-)   | UP    | neutron-linuxbridge-agent |
+| ffb2c373-5dfc-4fae-ac8d-c40fcb79153c | Linux bridge agent | ctl02 | None              | :-)   | UP    | neutron-linuxbridge-agent |
++--------------------------------------+--------------------+-------+-------------------+-------+-------+---------------------------+
+```

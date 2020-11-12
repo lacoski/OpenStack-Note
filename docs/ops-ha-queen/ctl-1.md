@@ -12,6 +12,7 @@ Quy hoạch Network:
 
 ### Setup node
 
+```
 hostnamectl set-hostname ctl01
 
 echo "Setup IP eth0"
@@ -46,9 +47,11 @@ systemctl restart chronyd.service
 chronyc sources
 
 init 6
+```
 
 ### Chuẩn bị sysctl
 
+```
 echo 'net.ipv4.conf.all.arp_ignore = 1'  >> /etc/sysctl.conf
 echo 'net.ipv4.conf.all.arp_announce = 2'  >> /etc/sysctl.conf
 echo 'net.ipv4.conf.all.rp_filter = 2'  >> /etc/sysctl.conf
@@ -65,19 +68,24 @@ net.ipv4.conf.default.rp_filter = 0
 EOF
 
 sysctl -p
+```
 
 ### Cấu hình hostname
 
+```
 echo "10.10.11.87 ctl01" >> /etc/hosts
 echo "10.10.11.88 ctl02" >> /etc/hosts
 echo "10.10.11.89 ctl03" >> /etc/hosts
 echo "10.10.11.94 com01" >> /etc/hosts
+```
 
 ### Setup keypair
 
+```
 ssh-keygen -t rsa -f /root/.ssh/id_rsa -q -P ""
 ssh-copy-id -o StrictHostKeyChecking=no -i /root/.ssh/id_rsa.pub root@ctl02
 ssh-copy-id -o StrictHostKeyChecking=no -i /root/.ssh/id_rsa.pub root@ctl03
+```
 
 Lưu ý:
 - Snapshot prenv
@@ -86,6 +94,7 @@ Lưu ý:
 
 ### Setup repo và Cài đặt MariaDB (Trên tất cả CTL)
 
+```
 echo '[mariadb]
 name = MariaDB
 baseurl = http://yum.mariadb.org/10.2/centos7-amd64
@@ -95,8 +104,11 @@ yum -y update
 
 yum install -y mariadb mariadb-server
 systemctl stop mariadb
+```
 
 ### Cấu hình
+
+```
 cp /etc/my.cnf.d/server.cnf /etc/my.cnf.d/server.cnf.bak
 
 echo '[server]
@@ -124,19 +136,24 @@ wsrep_sst_method=rsync
 [mariadb]
 [mariadb-10.2]
 ' > /etc/my.cnf.d/server.cnf
+```
 
 ### Khởi tạo Cluster
 
+```
 galera_new_cluster
 systemctl start mariadb
 systemctl enable mariadb
+```
 
 Lưu ý:
 - Sau bước này thực hiện start mariadb trên CTL2 và CTL3
 
 ### Kiểm tra
 
+```
 mysql -u root -e "SHOW STATUS LIKE 'wsrep_cluster_size'"
+```
 
 Kết quả
 ```
@@ -145,6 +162,7 @@ mysql -u root -e "SHOW STATUS LIKE 'wsrep_cluster_size'"
 
 ### Đặt mật khẩu xác thực Root
 
+```
 password_galera_root=Welcome123
 cat << EOF | mysql -uroot
 GRANT ALL PRIVILEGES ON *.* TO 'root'@'%' IDENTIFIED BY '$password_galera_root';FLUSH PRIVILEGES;
@@ -158,13 +176,14 @@ GRANT ALL PRIVILEGES ON *.* TO 'root'@'ctl01' IDENTIFIED BY '$password_galera_ro
 GRANT ALL PRIVILEGES ON *.* TO 'root'@'ctl02' IDENTIFIED BY '$password_galera_root';FLUSH PRIVILEGES;
 GRANT ALL PRIVILEGES ON *.* TO 'root'@'ctl03' IDENTIFIED BY '$password_galera_root';FLUSH PRIVILEGES;
 EOF
+```
 
 ### Cấu hình cho haproxy check mysql
 
+```
 yum install rsync xinetd crudini git -y
 git clone https://github.com/thaonguyenvan/percona-clustercheck
 cp percona-clustercheck/clustercheck /usr/local/bin
-
 
 cat << EOF >> /etc/xinetd.d/mysqlchk
 service mysqlchk
@@ -181,20 +200,28 @@ service mysqlchk
       per_source = UNLIMITED
 }
 EOF
-
+```
 ### Tạo service
+```
 echo 'mysqlchk 9200/tcp # MySQL check' >> /etc/services
+```
 
 ### Tạo tk check mysql
+```
 mysql -uroot -pWelcome123
 GRANT PROCESS ON *.* TO 'clustercheckuser'@'localhost' IDENTIFIED BY 'clustercheckpassword!';
 FLUSH PRIVILEGES;
 EXIT
+```
 
 ### Bật xinetd
+```
 systemctl start xinetd
 systemctl enable xinetd
+```
 
+Kết quả mẫu
+```
 [root@ctl01 ~]# clustercheck
 HTTP/1.1 200 OK
 Content-Type: text/plain
@@ -202,14 +229,16 @@ Connection: close
 Content-Length: 40
 
 Percona XtraDB Cluster Node is synced.
+```
 
 Lưu ý:
 - Sau bước này thực hiện cài đặt plugin check lên CTL02 và CLT03, làm lần lượt
 
-## Phần X: Cài đặt RabbitMQ Cluster 
+## Phần 3: Cài đặt RabbitMQ Cluster 
 
 ### Cài đặt môi trường và RabbitMQ (Trên tất cả CTL)
 
+```
 yum -y install epel-release
 yum update -y
 yum -y install erlang socat wget
@@ -224,10 +253,11 @@ systemctl status rabbitmq-server
 
 rabbitmq-plugins enable rabbitmq_management
 chown -R rabbitmq:rabbitmq /var/lib/rabbitmq/
-
+```
 
 ### Cấu hình cluster trên node ctl1
 
+```
 rabbitmqctl add_user openstack Welcome123
 rabbitmqctl set_permissions openstack ".*" ".*" ".*"
 rabbitmqctl set_user_tags openstack administrator
@@ -238,8 +268,8 @@ scp -p /var/lib/rabbitmq/.erlang.cookie ctl02:/var/lib/rabbitmq/.erlang.cookie
 scp -p /var/lib/rabbitmq/.erlang.cookie ctl03:/var/lib/rabbitmq/.erlang.cookie
 
 rabbitmqctl start_app
-
 rabbitmqctl cluster_status
+```
 
 Kết quả
 ```
@@ -254,10 +284,11 @@ Cluster status of node rabbit@ctl01
 
 Sau bước này tới CTL2 và CTL3 join cluster RabbitMQ
 
-## Phần X: Triển khai PCS
+## Phần 4: Triển khai PCS
 
 ### Chuẩn bị môi trường (Trên tất cả các node)
 
+```
 yum install pacemaker corosync haproxy pcs fence-agents-all resource-agents psmisc policycoreutils-python -y
 
 echo Welcome123 | passwd --stdin hacluster
@@ -265,9 +296,11 @@ echo Welcome123 | passwd --stdin hacluster
 systemctl enable pcsd.service pacemaker.service corosync.service haproxy.service
 
 systemctl start pcsd.service
+```
 
 ### Cấu hình Cluster
 
+```
 pcs cluster auth ctl01 ctl02 ctl03 -u hacluster -p Welcome123
 pcs cluster setup --name ha_cluster ctl01 ctl02 ctl03
 
@@ -292,10 +325,11 @@ pcs resource create p_haproxy systemd:haproxy \
 
 pcs constraint colocation add vip_public with p_haproxy score=INFINITY
 pcs constraint order start vip_public then start p_haproxy
-
+```
 
 ### Config HAProxy
 
+```
 cp /etc/haproxy/haproxy.cfg /etc/haproxy/haproxy.cfg.org 
 rm -rf /etc/haproxy/haproxy.cfg
 cat >> /etc/haproxy/haproxy.cfg << EOF
@@ -460,37 +494,43 @@ listen horizon
     server controller2 10.10.11.88:80  weight 1 check
     server controller3 10.10.11.89:80  weight 1 check
 EOF
-
-
+```
 
 Sau bước này trở lại CTL 2 3 cấu hình HAProxy
 
 Sau khi cấu hình HAProxy xong trên tất cả các node thực hiện
 
+```
 pcs resource restart p_haproxy
 pcs resource cleanup
+```
 
-## Phần X: Cài đặt các gói cần thiết cho OPS (Trên tất cả các node)
+## Phần 5: Cài đặt các gói cần thiết cho OPS (Trên tất cả các node)
 
+```
 yum -y install centos-release-openstack-queens
 yum -y install crudini wget vim
 yum -y install python-openstackclient openstack-selinux python2-PyMySQL
+```
 
-## Phần X: Cấu hình memcache
+## Phần 6: Cấu hình memcache
 
+```
 yum install -y memcached
 
 sed -i "s/-l 127.0.0.1,::1/-l 10.10.11.87/g" /etc/sysconfig/memcached
 
 systemctl enable memcached.service
 systemctl restart memcached.service
+```
 
 Lưu ý:
 - Cấu hình lần lượt từ CTL 1 tới CTL 2, CTL 3
 
-## Phần X: Cài đặt Keystone
+## Phần 7: Cài đặt Keystone
 
 ### Tạo db
+```
 mysql -u root -pWelcome123
 CREATE DATABASE keystone;
 GRANT ALL PRIVILEGES ON keystone.* TO 'keystone'@'localhost' \
@@ -502,17 +542,25 @@ GRANT ALL PRIVILEGES ON keystone.* TO 'keystone'@'ctl01' IDENTIFIED BY 'Welcome1
 GRANT ALL PRIVILEGES ON keystone.* TO 'keystone'@'ctl02' IDENTIFIED BY 'Welcome123';FLUSH PRIVILEGES;
 GRANT ALL PRIVILEGES ON keystone.* TO 'keystone'@'ctl03' IDENTIFIED BY 'Welcome123';FLUSH PRIVILEGES;
 exit
+```
 
 ### Cài đặt gói (Trên tất cả các node)
+```
 yum install openstack-keystone httpd mod_wsgi -y
+```
 
-### Cấu hình dịch vụ
+### Cấu hình bind port keystone
+
+```
 cp /usr/share/keystone/wsgi-keystone.conf /etc/httpd/conf.d/
 sed -i -e 's/VirtualHost \*/VirtualHost 10.10.11.87/g' /etc/httpd/conf.d/wsgi-keystone.conf
 sed -i -e 's/Listen 5000/Listen 10.10.11.87:5000/g' /etc/httpd/conf.d/wsgi-keystone.conf
 sed -i -e 's/Listen 35357/Listen 10.10.11.87:35357/g' /etc/httpd/conf.d/wsgi-keystone.conf
 sed -i -e 's/^Listen.*/Listen 10.10.11.87:80/g' /etc/httpd/conf/httpd.conf
+```
 
+### Cấu hình dịch vụ
+```
 cp /etc/keystone/keystone.conf /etc/keystone/keystone.conf.org
 rm -rf /etc/keystone/keystone.conf
 
@@ -561,9 +609,12 @@ provider = fernet
 [tokenless_auth]
 [trust]
 EOF
-
+```
+```
 chown root:keystone /etc/keystone/keystone.conf
+```
 
+```
 su -s /bin/sh -c "keystone-manage db_sync" keystone
 
 keystone-manage fernet_setup --keystone-user keystone --keystone-group keystone
@@ -577,10 +628,14 @@ keystone-manage bootstrap --bootstrap-password Welcome123 \
   --bootstrap-internal-url http://10.10.11.93:5000/v3/ \
   --bootstrap-public-url http://10.10.11.93:5000/v3/ \
   --bootstrap-region-id RegionOne
+```
 
+```
 systemctl enable httpd.service
 systemctl start httpd.service
+```
 
+```
 export OS_USERNAME=admin
 export OS_PASSWORD=Welcome123
 export OS_PROJECT_NAME=admin
@@ -598,7 +653,9 @@ openstack project create --domain default \
 
 openstack user create --domain default \
   --password Welcome123 demo
+```
 
+```
 openstack role create user
 openstack role add --project demo --user demo user
 
@@ -607,8 +664,9 @@ unset OS_AUTH_URL OS_PASSWORD
 openstack --os-auth-url http://10.10.11.93:35357/v3 \
   --os-project-domain-name Default --os-user-domain-name Default \
   --os-project-name admin --os-username admin token issue
+```
 
-
+```
 cat << EOF >> admin-openrc
 export OS_PROJECT_DOMAIN_NAME=Default
 export OS_USER_DOMAIN_NAME=Default
@@ -630,6 +688,7 @@ export OS_AUTH_URL=http://10.10.11.93:5000/v3
 export OS_IDENTITY_API_VERSION=3
 export OS_IMAGE_API_VERSION=2
 EOF
+```
 
 Lưu ý:
 - Sau bước này cấu hình Keystone trên CTL 2 và 3
@@ -643,14 +702,17 @@ Test theo test case sau:
 
 Bảo đảm các test case đều pass
 
+```
 systemctl stop httpd
 source admin-openrc
 openstack token issue
+```
 
-## Phần X: Cài đặt Glance
+## Phần 8: Cài đặt Glance
 
 ### Tạo db
 
+```
 mysql -u root -pWelcome123
 
 CREATE DATABASE glance;
@@ -665,29 +727,37 @@ GRANT ALL PRIVILEGES ON glance.* TO 'glance'@'ctl01' IDENTIFIED BY 'Welcome123';
 GRANT ALL PRIVILEGES ON glance.* TO 'glance'@'ctl02' IDENTIFIED BY 'Welcome123';FLUSH PRIVILEGES;
 GRANT ALL PRIVILEGES ON glance.* TO 'glance'@'ctl03' IDENTIFIED BY 'Welcome123';FLUSH PRIVILEGES;
 exit
+```
 
 ### Tạo user
 
+```
 openstack user create --domain default --password Welcome123 glance
 openstack role add --project service --user glance admin
 openstack service create --name glance \
   --description "OpenStack Image" image
+```
 
 ### Tạo endpoint
 
+```
 openstack endpoint create --region RegionOne \
   image public http://10.10.11.93:9292
 openstack endpoint create --region RegionOne \
   image admin http://10.10.11.93:9292
 openstack endpoint create --region RegionOne \
   image internal http://10.10.11.93:9292
+```
 
 ### Cài packages (Thực hiện trên tất cả CTL)
 
+```
 yum install -y openstack-glance
+```
 
-### Cấu hình Glance
+### Cấu hình glance-api
 
+```
 cp /etc/glance/glance-api.conf /etc/glance/glance-api.conf.org 
 rm -rf /etc/glance/glance-api.conf
 
@@ -729,7 +799,10 @@ flavor = keystone
 [task]
 [taskflow_executor]
 EOF
+```
 
+### Cấu hình glance-registry
+```
 cp /etc/glance/glance-registry.conf /etc/glance/glance-registry.conf.org
 rm -rf /etc/glance/glance-registry.conf
 cat << EOF >> /etc/glance/glance-registry.conf
@@ -758,28 +831,38 @@ password = Welcome123
 flavor = keystone
 [profiler]
 EOF
+```
 
-
+### Phân quyền
+```
 chown root:glance /etc/glance/glance-api.conf
 chown root:glance /etc/glance/glance-registry.conf
+```
 
+### Sync DB
+```
 su -s /bin/sh -c "glance-manage db_sync" glance
+```
 
 ### Enable và start dịch vụ 
 
+```
 systemctl enable openstack-glance-api.service \
   openstack-glance-registry.service
 
 systemctl start openstack-glance-api.service \
   openstack-glance-registry.service
+```
 
 ### Download và tạo image
 
+```
 wget http://download.cirros-cloud.net/0.3.5/cirros-0.3.5-x86_64-disk.img
 openstack image create "cirros" \
   --file cirros-0.3.5-x86_64-disk.img \
   --disk-format qcow2 --container-format bare \
   --public
+```
 
 Sau bước này cấu hình glance tại CTL 2 và CTL 3
 
@@ -790,6 +873,7 @@ Lưu ý: Yêu cầu thực hiện xong bước cấu hình cho glance-api và gl
 Lưu ý: Sau khi tạo images, mặc định image sẽ được đưa vào thư mục /var/lib/glance/images trên 1 trong 3 node, ta cần scp image này sang 2 node còn lại vào chính thư mục đó, đồng thời phân quyền
 Ví dụ image a89941cd-6319-4958-9a51-27a55a47d926 nằm ở node ctl1
 
+```
 [root@ctl01 ~]# ls /var/lib/glance/images
 a89941cd-6319-4958-9a51-27a55a47d926
 
@@ -798,6 +882,7 @@ cd /var/lib/glance/images
 scp a89941cd-6319-4958-9a51-27a55a47d926 root@ctl01:/var/lib/glance/images/
 scp a89941cd-6319-4958-9a51-27a55a47d926 root@ctl02:/var/lib/glance/images/
 scp a89941cd-6319-4958-9a51-27a55a47d926 root@ctl03:/var/lib/glance/images/
+```
 
 Lưu ý: Thực hiện trên cả CTL 2 và CTL 3
 chown -R glance:glance /var/lib/glance/images
@@ -809,20 +894,25 @@ Test theo test case sau:
 
 Bảo đảm các test case đều pass
 
+```
 systemctl stop openstack-glance-api.service \
   openstack-glance-registry.service
 openstack image list
+```
 
-## Phần X: Cài đặt Nova
+## Phần 9: Cài đặt Nova
 
 ### Cài gói (Thực hiện trên tất cả CTL)
 
+```
 yum install -y openstack-nova-api openstack-nova-conductor \
   openstack-nova-console openstack-nova-novncproxy \
   openstack-nova-scheduler openstack-nova-placement-api
-
+```
 
 ### Tạo db
+
+```
 mysql -u root -pWelcome123
 
 CREATE DATABASE nova_api;
@@ -855,9 +945,11 @@ GRANT ALL PRIVILEGES ON nova_cell0.* TO 'nova'@'ctl01' IDENTIFIED BY 'Welcome123
 GRANT ALL PRIVILEGES ON nova_cell0.* TO 'nova'@'ctl02' IDENTIFIED BY 'Welcome123';FLUSH PRIVILEGES;
 GRANT ALL PRIVILEGES ON nova_cell0.* TO 'nova'@'ctl03' IDENTIFIED BY 'Welcome123';FLUSH PRIVILEGES;
 exit
+```
 
 ### Tạo user và endpoint
 
+```
 openstack user create --domain default --password Welcome123 nova
 openstack role add --project service --user nova admin
 openstack service create --name nova \
@@ -877,10 +969,11 @@ openstack service create --name placement --description "Placement API" placemen
 openstack endpoint create --region RegionOne placement public http://10.10.11.93:8778
 openstack endpoint create --region RegionOne placement admin http://10.10.11.93:8778
 openstack endpoint create --region RegionOne placement internal http://10.10.11.93:8778
-
+```
 
 ### Cấu hình nova
 
+```
 cp /etc/nova/nova.conf /etc/nova/nova.conf.org 
 rm -rf /etc/nova/nova.conf
 
@@ -987,8 +1080,11 @@ novncproxy_base_url = http://10.10.11.93:6080/vnc_auto.html
 [xenserver]
 [xvp]
 EOF
+```
 
 ### Thêm vào file 00-nova-placement-api.conf 
+
+```
 cat << 'EOF' >> /etc/httpd/conf.d/00-nova-placement-api.conf
 
 <Directory /usr/bin>
@@ -1001,21 +1097,26 @@ cat << 'EOF' >> /etc/httpd/conf.d/00-nova-placement-api.conf
    </IfVersion>
 </Directory>
 EOF
-
+```
 
 ### Cấu hình bind port cho nova-placement
+```
 sed -i -e 's/VirtualHost \*/VirtualHost 10.10.11.87/g' /etc/httpd/conf.d/00-nova-placement-api.conf
 sed -i -e 's/Listen 8778/Listen 10.10.11.87:8778/g' /etc/httpd/conf.d/00-nova-placement-api.conf
 
 systemctl restart httpd
+```
 
 ### sync db
+```
 su -s /bin/sh -c "nova-manage api_db sync" nova
 su -s /bin/sh -c "nova-manage cell_v2 map_cell0" nova
 su -s /bin/sh -c "nova-manage cell_v2 create_cell --name=cell1 --verbose" nova
 su -s /bin/sh -c "nova-manage db sync" nova
+```
 
 ### Enable và start
+```
 systemctl enable openstack-nova-api.service \
   openstack-nova-scheduler.service openstack-nova-consoleauth.service \
   openstack-nova-conductor.service openstack-nova-novncproxy.service
@@ -1025,34 +1126,39 @@ systemctl restart openstack-nova-api.service \
   openstack-nova-conductor.service openstack-nova-novncproxy.service
 
 openstack compute service list
-
+```
 Lưu ý:
 - Sau bước này cấu hình Nova trên các node CTL còn lại
 
-Test theo test case sau:
+### Test theo test case sau
 - Bật Nova services tại CTL 1, tắt Nova services trên CTL 2 3, list nova services
 - Bật Nova services tại CTL 2, tắt Nova services trên CTL 1 3, list nova services
 - Bật Nova services tại CTL 3, tắt Nova services trên CTL 1 2, list nova services
 
 Bảo đảm các test case đều pass
 
+```
 systemctl stop openstack-nova-api.service \
   openstack-nova-scheduler.service openstack-nova-consoleauth.service \
   openstack-nova-conductor.service openstack-nova-novncproxy.service
 
 openstack compute service list
+```
 
-## Phần X: Cài neutron
+## Phần 10: Cài neutron
 
 ### Cài packages (Thực hiện trên tất cả CTL)
 
+```
 yum install openstack-neutron openstack-neutron-ml2 openstack-neutron-linuxbridge ebtables -y
+```
 
 Lưu ý:
 - DHCP agent và metadata agent được chạy trên node compute
 
 
 ### Tạo db
+```
 mysql -u root -pWelcome123
 CREATE DATABASE neutron;
 GRANT ALL PRIVILEGES ON neutron.* TO 'neutron'@'localhost' \
@@ -1063,9 +1169,11 @@ GRANT ALL PRIVILEGES ON neutron.* TO 'neutron'@'ctl01' IDENTIFIED BY 'Welcome123
 GRANT ALL PRIVILEGES ON neutron.* TO 'neutron'@'ctl02' IDENTIFIED BY 'Welcome123';FLUSH PRIVILEGES;
 GRANT ALL PRIVILEGES ON neutron.* TO 'neutron'@'ctl03' IDENTIFIED BY 'Welcome123';FLUSH PRIVILEGES;
 exit
+```
 
 ### Tạo user, endpoint trên 1 node
 
+```
 openstack user create --domain default --password Welcome123 neutron
 openstack role add --project service --user neutron admin
 openstack service create --name neutron \
@@ -1077,9 +1185,10 @@ openstack endpoint create --region RegionOne \
   network internal http://10.10.11.93:9696
 openstack endpoint create --region RegionOne \
   network admin http://10.10.11.93:9696
-
+```
 
 ### Cấu hình
+```
 cp /etc/neutron/neutron.conf /etc/neutron/neutron.conf.org
 rm -rf /etc/neutron/neutron.conf
 
@@ -1135,8 +1244,10 @@ rabbit_ha_queues = true
 [quotas]
 [ssl]
 EOF
+```
 
 ### Cấu hình file ml2
+```
 cp /etc/neutron/plugins/ml2/ml2_conf.ini /etc/neutron/plugins/ml2/ml2_conf.ini.org
 rm -rf /etc/neutron/plugins/ml2/ml2_conf.ini
 
@@ -1159,9 +1270,11 @@ vni_ranges = 1:1000
 [securitygroup]
 enable_ipset = True
 EOF
+```
 
 ### Cấu hình file LB agent
 
+```
 cp /etc/neutron/plugins/ml2/linuxbridge_agent.ini /etc/neutron/plugins/ml2/linuxbridge_agent.ini.org 
 rm -rf /etc/neutron/plugins/ml2/linuxbridge_agent.ini
 
@@ -1180,9 +1293,11 @@ enable_vxlan = true
 local_ip = 10.10.14.87
 l2_population = true
 EOF
+```
 
 ### Cấu hình trên file l3 agent
 
+```
 cp /etc/neutron/l3_agent.ini /etc/neutron/l3_agent.ini.org
 rm -rf /etc/neutron/l3_agent.ini
 
@@ -1192,9 +1307,11 @@ interface_driver = neutron.agent.linux.interface.BridgeInterfaceDriver
 [agent]
 [ovs]
 EOF
+```
 
 ### Chỉnh sửa file /etc/nova/nova.conf
 
+```
 [neutron]
 url = http://10.10.11.93:9696
 auth_url = http://10.10.11.93:35357
@@ -1207,37 +1324,61 @@ username = neutron
 password = Welcome123
 service_metadata_proxy = true
 metadata_proxy_shared_secret = Welcome123
+```
 
 ### Restart lại dv nova
 
+```
 systemctl restart openstack-nova-api.service openstack-nova-scheduler.service openstack-nova-consoleauth.service openstack-nova-conductor.service openstack-nova-novncproxy.service
+```
 
 ### Phần quyền
+```
 chown -R root:neutron /etc/neutron/
+```
 
 ### Tạo liên kết
+```
 ln -s /etc/neutron/plugins/ml2/ml2_conf.ini /etc/neutron/plugin.ini
+```
 
 ### Sync db
+```
 su -s /bin/sh -c "neutron-db-manage --config-file /etc/neutron/neutron.conf --config-file /etc/neutron/plugins/ml2/ml2_conf.ini upgrade head" neutron
-
+```
 
 ### Enable và start dịch vụ 
 
+```
 systemctl enable neutron-server.service neutron-linuxbridge-agent.service neutron-l3-agent.service
 systemctl restart neutron-server.service neutron-linuxbridge-agent.service neutron-l3-agent.service
 
 openstack network agent list
+```
 
 Sau bước này cấu hình neutron tại CTL 2 và CTL 3
 
-## Cấu hình horizon
+### Test lại dịch vụ
 
-# Tải packages
+- Bật Neutron service tại CTL 1, tắt Neutron service trên CTL 2 3, list Neutron service
+- Bật Neutron service tại CTL 2, tắt Neutron service trên CTL 1 3, list Neutron service
+- Bật Neutron service tại CTL 3, tắt Neutron service trên CTL 1 2, list Neutron service
 
+```
+systemctl stop neutron-server.service neutron-linuxbridge-agent.service neutron-l3-agent.service
+openstack network agent list
+```
+
+## Phần 11: Cấu hình horizon
+
+### Tải packages (Trên tất cả các CTL)
+
+```
 yum install openstack-dashboard -y
+```
 
-# Tạo file direct
+### Tạo file direct
+```
 filehtml=/var/www/html/index.html
 touch $filehtml
 cat << EOF >> $filehtml
@@ -1250,11 +1391,12 @@ cat << EOF >> $filehtml
 </body>
 </html>
 EOF
-
-# Backup cấu hình
+```
+### Cấu hình Horizon
+```
 cp /etc/openstack-dashboard/local_settings /etc/openstack-dashboard/local_settings.org
 
-# Thay đổi cấu hình trong file /etc/openstack-dashboard/local_settings
+### Thay đổi cấu hình trong file /etc/openstack-dashboard/local_settings
 ALLOWED_HOSTS = ['*',]
 OPENSTACK_API_VERSIONS = {
     "identity": 3,
@@ -1264,7 +1406,7 @@ OPENSTACK_API_VERSIONS = {
 OPENSTACK_KEYSTONE_MULTIDOMAIN_SUPPORT = True
 OPENSTACK_KEYSTONE_DEFAULT_DOMAIN = 'Default'
 
-# Lưu ý thêm SESSION_ENGINE vào trên dòng CACHE như bên dưới
+### Lưu ý thêm SESSION_ENGINE vào trên dòng CACHE như bên dưới
 SESSION_ENGINE = 'django.contrib.sessions.backends.cache'
 CACHES = {
     'default': {
@@ -1276,7 +1418,7 @@ OPENSTACK_HOST = "10.10.11.93"
 OPENSTACK_KEYSTONE_URL = "http://10.10.11.93:5000/v3"
 OPENSTACK_KEYSTONE_DEFAULT_ROLE = "user"
 
-# Lưu ý: Nếu chỉ sử dụng provider, chỉnh sửa các thông số sau
+### Lưu ý: Nếu chỉ sử dụng provider, chỉnh sửa các thông số sau
 OPENSTACK_NEUTRON_NETWORK = {
     'enable_router': False,
     'enable_quotas': False,
@@ -1287,66 +1429,29 @@ OPENSTACK_NEUTRON_NETWORK = {
 }
 
 TIME_ZONE = "Asia/Ho_Chi_Minh"
+```
 
-# Scp sang 2 node còn lại
+### Scp sang 2 node còn lại
 Lưu ý: Yêu cầu đã thực hiện xong bước xóa cấu hình dashboard trên 2 node còn lại
-
+```
 scp /etc/openstack-dashboard/local_settings root@ctl02:/etc/openstack-dashboard/
 scp /etc/openstack-dashboard/local_settings root@ctl03:/etc/openstack-dashboard/
-
-# Thêm vào file /etc/httpd/conf.d/openstack-dashboard.conf
+```
+### Thêm vào file /etc/httpd/conf.d/openstack-dashboard.conf
+```
 echo "WSGIApplicationGroup %{GLOBAL}" >> /etc/httpd/conf.d/openstack-dashboard.conf
-
-# Restart lại httpd
+```
+### Restart lại httpd
+```
 systemctl restart httpd.service memcached.service
+```
 
+Sau bước này tới CTL 2 và CTL 3 cấu hình Horizon
 
-## Yêu cầu:
-- HA Cinder cần có Ceph
+Sau khi cấu hình xong Horizon tại CTL 2 CTL 3, Đăng nhập vào Horizon qua http://10.10.11.93/ (http://VIP)
 
-## Cấu hình Cinder
+Sau bước này cài đặt COM 1 theo tài liệu
 
-# Tao db
+## Phần 12: Cấu hình Cinder
 
-mysql -u root -pWelcome123
-CREATE DATABASE cinder;
-GRANT ALL PRIVILEGES ON cinder.* TO 'cinder'@'localhost' \
-  IDENTIFIED BY 'Welcome123';
-GRANT ALL PRIVILEGES ON cinder.* TO 'cinder'@'%' \
-  IDENTIFIED BY 'Welcome123'; 
-
-GRANT ALL PRIVILEGES ON cinder.* TO 'cinder'@'ctl01' IDENTIFIED BY 'Welcome123';FLUSH PRIVILEGES;
-GRANT ALL PRIVILEGES ON cinder.* TO 'cinder'@'ctl02' IDENTIFIED BY 'Welcome123';FLUSH PRIVILEGES;
-GRANT ALL PRIVILEGES ON cinder.* TO 'cinder'@'ctl03' IDENTIFIED BY 'Welcome123';FLUSH PRIVILEGES;
-
-
-# Tao endpoint
-
-openstack user create --domain default --password Welcome123 cinder
-openstack role add --project service --user cinder admin
-
-openstack service create --name cinderv2 \
-  --description "OpenStack Block Storage" volumev2  
-openstack service create --name cinderv3 \
-  --description "OpenStack Block Storage" volumev3
-  
-openstack endpoint create --region RegionOne \
-  volumev2 public http://10.10.11.93:8776/v2/%\(project_id\)s
-openstack endpoint create --region RegionOne \
-  volumev2 internal http://10.10.11.93:8776/v2/%\(project_id\)s
-openstack endpoint create --region RegionOne \
-  volumev2 admin http://10.10.11.93:8776/v2/%\(project_id\)s
-openstack endpoint create --region RegionOne \
-  volumev3 public http://10.10.11.93:8776/v3/%\(project_id\)s
-openstack endpoint create --region RegionOne \
-  volumev3 internal http://10.10.11.93:8776/v3/%\(project_id\)s
-openstack endpoint create --region RegionOne \
-  volumev3 admin http://10.10.11.93:8776/v3/%\(project_id\)s
-
-# Tai package
-yum install openstack-cinder -y
-
-# Sửa cấu hình cinder
- 
-cp /etc/cinder/cinder.conf /etc/cinder/cinder.conf.bak 
-rm -rf /etc/cinder/cinder.conf
+- HA cho Cinder cần có Ceph

@@ -4,14 +4,15 @@
 
 ### Phân hoạch
 
-VIP MNGT: 10.10.11.94
-
-vlan mgnt: eth0: 10.10.11.89
-vlan provider: eth1: 10.10.12.89
-vlan datavm: eth2: 10.10.14.89
+Quy hoạch Network:
+- VIP MNGT: 10.10.11.94
+- vlan mgnt: eth0: 10.10.11.89
+- vlan provider: eth1: 10.10.12.89
+- vlan datavm: eth2: 10.10.14.89
 
 ### Setup node
 
+```
 hostnamectl set-hostname ctl03
 
 echo "Setup IP eth0"
@@ -46,9 +47,10 @@ systemctl restart chronyd.service
 chronyc sources
 
 init 6
+```
 
 ### Chuẩn bị sysctl
-
+```
 echo 'net.ipv4.conf.all.arp_ignore = 1'  >> /etc/sysctl.conf
 echo 'net.ipv4.conf.all.arp_announce = 2'  >> /etc/sysctl.conf
 echo 'net.ipv4.conf.all.rp_filter = 2'  >> /etc/sysctl.conf
@@ -65,27 +67,29 @@ net.ipv4.conf.default.rp_filter = 0
 EOF
 
 sysctl -p
+```
 
 ### Cấu hình hostname
-
+```
 echo "10.10.11.87 ctl01" >> /etc/hosts
 echo "10.10.11.88 ctl02" >> /etc/hosts
 echo "10.10.11.89 ctl03" >> /etc/hosts
 echo "10.10.11.94 com01" >> /etc/hosts
+```
 
 ### Setup keypair
-
+```
 ssh-keygen -t rsa -f /root/.ssh/id_rsa -q -P ""
 ssh-copy-id -o StrictHostKeyChecking=no -i /root/.ssh/id_rsa.pub root@ctl01
 ssh-copy-id -o StrictHostKeyChecking=no -i /root/.ssh/id_rsa.pub root@ctl02
-
+```
 Lưu ý:
-- Snapshot prenv
+- Snapshot preenv
 
 ## Phần 2: Setup Galera
 
 ### Setup repo và Cài đặt MariaDB (Trên tất cả CTL)
-
+```
 echo '[mariadb]
 name = MariaDB
 baseurl = http://yum.mariadb.org/10.2/centos7-amd64
@@ -96,8 +100,9 @@ yum -y update
 yum install -y mariadb mariadb-server
 yum install -y galera rsync
 systemctl stop mariadb
-
+```
 ### Cấu hình
+```
 cp /etc/my.cnf.d/server.cnf /etc/my.cnf.d/server.cnf.bak
 
 echo '[server]
@@ -125,19 +130,23 @@ wsrep_sst_method=rsync
 [mariadb]
 [mariadb-10.2]
 ' > /etc/my.cnf.d/server.cnf
+```
 
 ### Khởi tạo Cluster
 
 Lưu ý:
 - Chỉ chạy khi đã khởi tạo galera_new_cluster tại CTL1
 
+```
 systemctl start mariadb
 systemctl enable mariadb
+```
 
 Lưu ý:
 - Trở lại CTL1 và chờ tới thao tác tiếp theo
 
-## Cấu hình cho haproxy check mysql
+### Cấu hình cho haproxy check mysql
+```
 yum install rsync xinetd crudini git -y
 git clone https://github.com/thaonguyenvan/percona-clustercheck
 cp percona-clustercheck/clustercheck /usr/local/bin
@@ -158,14 +167,21 @@ service mysqlchk
       per_source = UNLIMITED
 }
 EOF
+```
 
 ### Tạo service
+```
 echo 'mysqlchk 9200/tcp # MySQL check' >> /etc/services
+```
 
 ### Bật xinetd
+```
 systemctl start xinetd
 systemctl enable xinetd
+```
 
+Kết quả mẫu
+```
 [root@ctl02 ~]# clustercheck
 HTTP/1.1 200 OK
 Content-Type: text/plain
@@ -173,14 +189,15 @@ Connection: close
 Content-Length: 40
 
 Percona XtraDB Cluster Node is synced.
+```
 
 Lưu ý:
 - Trở lại CTL1 và chờ tới thao tác tiếp theo
 
-## Phần X: Cài đặt RabbitMQ Cluster
+## Phần 3: Cài đặt RabbitMQ Cluster 
 
 ### Cài đặt môi trường và RabbitMQ (Trên tất cả CTL)
-
+```
 yum -y install epel-release
 yum update -y
 yum -y install erlang socat wget
@@ -195,9 +212,10 @@ systemctl status rabbitmq-server
 
 rabbitmq-plugins enable rabbitmq_management
 chown -R rabbitmq:rabbitmq /var/lib/rabbitmq/
+```
 
 ### Join Cluster RabbitMQ
-
+```
 chown rabbitmq:rabbitmq /var/lib/rabbitmq/.erlang.cookie
 chmod 400 /var/lib/rabbitmq/.erlang.cookie
 
@@ -206,14 +224,15 @@ systemctl restart rabbitmq-server.service
 rabbitmqctl stop_app
 rabbitmqctl join_cluster rabbit@ctl01
 rabbitmqctl start_app
+```
 
 Lưu ý:
 - Trở lại CTL1 và chờ tới thao tác tiếp theo
 
-## Phần X: Triển khai PCS
+## Phần 4: Triển khai PCS
 
 ### Chuẩn bị môi trường (Trên tất cả các node)
-
+```
 yum install pacemaker corosync haproxy pcs fence-agents-all resource-agents psmisc policycoreutils-python -y
 
 echo Welcome123 | passwd --stdin hacluster
@@ -221,11 +240,12 @@ echo Welcome123 | passwd --stdin hacluster
 systemctl enable pcsd.service pacemaker.service corosync.service haproxy.service
 
 systemctl start pcsd.service
+```
 
 Sau bước này tới CTL2 và CTL3 join cluster RabbitMQ
 
-## Config HAProxy
-
+### Config HAProxy
+```
 cp /etc/haproxy/haproxy.cfg /etc/haproxy/haproxy.cfg.org 
 rm -rf /etc/haproxy/haproxy.cfg
 cat >> /etc/haproxy/haproxy.cfg << EOF
@@ -390,42 +410,52 @@ listen horizon
     server controller2 10.10.11.88:80  weight 1 check
     server controller3 10.10.11.89:80  weight 1 check
 EOF
+```
 
 Sau bước này trở lại CTL 1
 
-## Phần X: Cài đặt các gói cần thiết cho OPS (Trên tất cả các node)
+## Phần 5: Cài đặt các gói cần thiết cho OPS (Trên tất cả các node)
 
+```
 yum -y install centos-release-openstack-queens
 yum -y install crudini wget vim
 yum -y install python-openstackclient openstack-selinux python2-PyMySQL
+```
 
 Sau bước này trở lại CTL 1
 
-## Phần X: Cấu hình memcache
+## Phần 6: Cấu hình memcache
 
+```
 yum install -y memcached
 
 sed -i "s/-l 127.0.0.1,::1/-l 10.10.11.89/g" /etc/sysconfig/memcached
 
 systemctl enable memcached.service
 systemctl restart memcached.service
+```
 
 Sau bước này trở lại CTL 1
 
-## Phần X: Cài đặt Keystone
+## Phần 7: Cài đặt Keystone
 
 ### Cài packages
+```
 yum install openstack-keystone httpd mod_wsgi -y
-
+```
 
 ### Cấu hình bind port
 
+```
 cp /usr/share/keystone/wsgi-keystone.conf /etc/httpd/conf.d/
 sed -i -e 's/VirtualHost \*/VirtualHost 10.10.11.89/g' /etc/httpd/conf.d/wsgi-keystone.conf
 sed -i -e 's/Listen 5000/Listen 10.10.11.89:5000/g' /etc/httpd/conf.d/wsgi-keystone.conf
 sed -i -e 's/Listen 35357/Listen 10.10.11.89:35357/g' /etc/httpd/conf.d/wsgi-keystone.conf
 sed -i -e 's/^Listen.*/Listen 10.10.11.89:80/g' /etc/httpd/conf/httpd.conf
+```
 
+### Cấu hình dịch vụ
+```
 cp /etc/keystone/keystone.conf /etc/keystone/keystone.conf.org
 rm -rf /etc/keystone/keystone.conf
 cat << EOF >> /etc/keystone/keystone.conf
@@ -479,15 +509,20 @@ chown -R keystone:keystone /etc/keystone/credential-keys /etc/keystone/fernet-ke
 
 systemctl enable httpd.service
 systemctl start httpd.service
+```
 
 Sau bước này trở lại CTL 1
 
-## Phần X: Cài đặt Glance
+## Phần 8: Cài đặt Glance
 
 ### Cài packages (Thực hiện trên tất cả CTL)
+```
 yum install -y openstack-glance
+```
 
-### Cấu hình Glance
+### Cấu hình glance-api
+
+```
 cp /etc/glance/glance-api.conf /etc/glance/glance-api.conf.org 
 rm -rf /etc/glance/glance-api.conf
 
@@ -529,7 +564,10 @@ flavor = keystone
 [task]
 [taskflow_executor]
 EOF
+```
 
+### Cấu hình glance-registry
+```
 cp /etc/glance/glance-registry.conf /etc/glance/glance-registry.conf.org
 rm -rf /etc/glance/glance-registry.conf
 cat << EOF >> /etc/glance/glance-registry.conf
@@ -558,37 +596,46 @@ password = Welcome123
 flavor = keystone
 [profiler]
 EOF
+```
 
 ### Phân quyền
-
+```
 chown root:glance /etc/glance/glance-api.conf
 chown root:glance /etc/glance/glance-registry.conf
+```
 
 ### Enable và start dịch vụ
-Lưu ý: Yêu cầu thực hiện xong bước sync db trên node controller1 
+Lưu ý: Yêu cầu thực hiện xong bước sync db trên node controller1
+
+```
 systemctl enable openstack-glance-api.service \
   openstack-glance-registry.service
 
 systemctl start openstack-glance-api.service \
   openstack-glance-registry.service
+```
 
 Lưu ý: Thực hiện sau khi up image sau khi scp Image giữa các CTL
+```
 chown -R glance:glance /var/lib/glance/images
+```
 
 Sau bước này trở lại CTL 1
 
-## Phần X: Cài đặt Nova
+## Phần 9: Cài đặt Nova
 
 ### Cài gói (Thực hiện trên tất cả CTL)
-
+```
 yum install -y openstack-nova-api openstack-nova-conductor \
   openstack-nova-console openstack-nova-novncproxy \
   openstack-nova-scheduler openstack-nova-placement-api
+```
 
 ### Cấu hình nova
 
 Lưu ý: Yêu cầu thực hiện xong bước tạo endpoint trên node controller1
 
+```
 cp /etc/nova/nova.conf /etc/nova/nova.conf.org 
 rm -rf /etc/nova/nova.conf
 
@@ -695,8 +742,10 @@ novncproxy_base_url = http://10.10.11.93:6080/vnc_auto.html
 [xenserver]
 [xvp]
 EOF
+```
 
 ### Thêm vào file 00-nova-placement-api.conf 
+```
 cat << 'EOF' >> /etc/httpd/conf.d/00-nova-placement-api.conf
 
 <Directory /usr/bin>
@@ -709,14 +758,17 @@ cat << 'EOF' >> /etc/httpd/conf.d/00-nova-placement-api.conf
    </IfVersion>
 </Directory>
 EOF
+```
 
 ### Cấu hình bind port cho nova-placement
+```
 sed -i -e 's/VirtualHost \*/VirtualHost 10.10.11.89/g' /etc/httpd/conf.d/00-nova-placement-api.conf
 sed -i -e 's/Listen 8778/Listen 10.10.11.89:8778/g' /etc/httpd/conf.d/00-nova-placement-api.conf
 systemctl restart httpd
+```
 
 ### Enable và start
-
+```
 systemctl enable openstack-nova-api.service \
   openstack-nova-scheduler.service openstack-nova-consoleauth.service \
   openstack-nova-conductor.service openstack-nova-novncproxy.service
@@ -724,19 +776,21 @@ systemctl enable openstack-nova-api.service \
 systemctl start openstack-nova-api.service \
   openstack-nova-scheduler.service openstack-nova-consoleauth.service \
   openstack-nova-conductor.service openstack-nova-novncproxy.service
+```
 
 Sau bước này trở về CTL 1
 
-## Phần X: Cài neutron
+## Phần 10: Cài neutron
 
 ### Cài packages (Thực hiện trên tất cả CTL)
-
+```
 yum install openstack-neutron openstack-neutron-ml2 openstack-neutron-linuxbridge ebtables -y
+```
 
 DHCP agent và metadata agent được chạy trên node compute
 
 ### Cấu hình
-
+```
 cp /etc/neutron/neutron.conf /etc/neutron/neutron.conf.org
 rm -rf /etc/neutron/neutron.conf
 
@@ -792,8 +846,10 @@ rabbit_ha_queues = true
 [quotas]
 [ssl]
 EOF
+```
 
-# Cấu hình file ml2
+### Cấu hình file ml2
+```
 cp /etc/neutron/plugins/ml2/ml2_conf.ini /etc/neutron/plugins/ml2/ml2_conf.ini.org
 rm -rf /etc/neutron/plugins/ml2/ml2_conf.ini
 
@@ -816,9 +872,10 @@ vni_ranges = 1:1000
 [securitygroup]
 enable_ipset = True
 EOF
+```
 
-# Cấu hình file LB agent
-
+### Cấu hình file LB agent
+```
 cp /etc/neutron/plugins/ml2/linuxbridge_agent.ini /etc/neutron/plugins/ml2/linuxbridge_agent.ini.org 
 rm -rf /etc/neutron/plugins/ml2/linuxbridge_agent.ini
 
@@ -837,9 +894,11 @@ enable_vxlan = true
 local_ip = 10.10.14.89
 l2_population = true
 EOF
+```
 
-# Cấu hình trên file l3 agent
+### Cấu hình trên file l3 agent
 
+```
 cp /etc/neutron/l3_agent.ini /etc/neutron/l3_agent.ini.org
 rm -rf /etc/neutron/l3_agent.ini
 
@@ -849,9 +908,11 @@ interface_driver = neutron.agent.linux.interface.BridgeInterfaceDriver
 [agent]
 [ovs]
 EOF
+```
 
-# Chỉnh sửa file /etc/nova/nova.conf
+### Chỉnh sửa file /etc/nova/nova.conf
 
+```
 [neutron]
 url = http://10.10.11.93:9696
 auth_url = http://10.10.11.93:35357
@@ -864,31 +925,40 @@ username = neutron
 password = Welcome123
 service_metadata_proxy = true
 metadata_proxy_shared_secret = Welcome123
+```
 
-# Restart lại dv nova
-
+### Restart lại dv nova
+```
 systemctl restart openstack-nova-api.service openstack-nova-scheduler.service openstack-nova-consoleauth.service openstack-nova-conductor.service openstack-nova-novncproxy.service
+```
 
-# Phần quyền
+### Phần quyền
+```
 chown -R root:neutron /etc/neutron/
+```
 
-# Tạo liên kết
+### Tạo liên kết
+```
 ln -s /etc/neutron/plugins/ml2/ml2_conf.ini /etc/neutron/plugin.ini
+```
 
-# Enable và start dịch vụ 
-
+### Enable và start dịch vụ 
+```
 systemctl enable neutron-server.service neutron-linuxbridge-agent.service neutron-l3-agent.service
 systemctl restart neutron-server.service neutron-linuxbridge-agent.service neutron-l3-agent.service
+```
 
-openstack network agent list
+Sau bước này trở lại CTL 1
 
-## Cấu hình horizon
+## Phần 11: Cấu hình horizon
 
-# Tải packages
-
+### Tải packages (Trên tất cả các CTL)
+```
 yum install openstack-dashboard -y
+```
 
-# Tạo file direct
+### Tạo file direct
+```
 filehtml=/var/www/html/index.html
 touch $filehtml
 cat << EOF >> $filehtml
@@ -901,20 +971,22 @@ cat << EOF >> $filehtml
 </body>
 </html>
 EOF
+```
 
-# Backup cấu hình
-cp /etc/openstack-dashboard/local_settings /etc/openstack-dashboard/local_settings.org
+### Kiểm tra file /etc/openstack-dashboard/local_settings
 
-# Xóa cấu hình 
-rm -rf /etc/openstack-dashboard/local_settings
+Bảo đảm nội dùng giống cấu hình trên CTL 1
 
-# Phân quyền cho cấu hình mới
+### Phân quyền cho cấu hình mới
 Lưu ý: Yêu cầu thực hiện xong bước chuyển cấu hình qua 2 node còn lại trên node controller1
-
+```
 chown root:apache /etc/openstack-dashboard/local_settings
-
-# Thêm vào file /etc/httpd/conf.d/openstack-dashboard.conf
+```
+### Thêm vào file /etc/httpd/conf.d/openstack-dashboard.conf
+```
 echo "WSGIApplicationGroup %{GLOBAL}" >> /etc/httpd/conf.d/openstack-dashboard.conf
-
-# Restart lại httpd
+```
+### Restart lại httpd
+```
 systemctl restart httpd.service memcached.service
+```
