@@ -353,3 +353,7 @@ Kết quả
 | ffb2c373-5dfc-4fae-ac8d-c40fcb79153c | Linux bridge agent | ctl02 | None              | :-)   | UP    | neutron-linuxbridge-agent |
 +--------------------------------------+--------------------+-------+-------------------+-------+-------+---------------------------+
 ```
+
+Sau bước này truy cập giao diện, cấu hình Network, boot VM
+
+http://10.10.11.93/

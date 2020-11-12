@@ -708,6 +708,8 @@ source admin-openrc
 openstack token issue
 ```
 
+Kiểm tra đồng thời HAProxy Stats: http://10.10.11.93:8080/stats
+
 ## Phần 8: Cài đặt Glance
 
 ### Tạo db
@@ -899,6 +901,8 @@ systemctl stop openstack-glance-api.service \
   openstack-glance-registry.service
 openstack image list
 ```
+
+Kiểm tra đồng thời HAProxy Stats: http://10.10.11.93:8080/stats
 
 ## Phần 9: Cài đặt Nova
 
@@ -1145,6 +1149,8 @@ systemctl stop openstack-nova-api.service \
 openstack compute service list
 ```
 
+Kiểm tra đồng thời HAProxy Stats: http://10.10.11.93:8080/stats
+
 ## Phần 10: Cài neutron
 
 ### Cài packages (Thực hiện trên tất cả CTL)
@@ -1369,6 +1375,8 @@ systemctl stop neutron-server.service neutron-linuxbridge-agent.service neutron-
 openstack network agent list
 ```
 
+Kiểm tra đồng thời HAProxy Stats: http://10.10.11.93:8080/stats
+
 ## Phần 11: Cấu hình horizon
 
 ### Tải packages (Trên tất cả các CTL)
@@ -1451,6 +1459,8 @@ Sau bước này tới CTL 2 và CTL 3 cấu hình Horizon
 Sau khi cấu hình xong Horizon tại CTL 2 CTL 3, Đăng nhập vào Horizon qua http://10.10.11.93/ (http://VIP)
 
 Sau bước này cài đặt COM 1 theo tài liệu
+
+Kiểm tra đồng thời HAProxy Stats: http://10.10.11.93:8080/stats
 
 ## Phần 12: Cấu hình Cinder
 
