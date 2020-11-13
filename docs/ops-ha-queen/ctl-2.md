@@ -121,20 +121,23 @@ bind-address=10.10.11.88
 [galera]
 wsrep_on=ON
 wsrep_provider=/usr/lib64/galera/libgalera_smm.so
-#add your node ips here
 wsrep_cluster_address="gcomm://10.10.11.87,10.10.11.88,10.10.11.89"
 binlog_format=row
 default_storage_engine=InnoDB
 innodb_autoinc_lock_mode=2
-#Cluster name
-wsrep_cluster_name="portal_cluster"
-# Allow server to accept connections on all interfaces.
+wsrep_cluster_name="galera_cluster"
 bind-address=10.10.11.88
-# this server ip, change for each server
 wsrep_node_address="10.10.11.88"
-# this server name, change for each server
 wsrep_node_name="node1"
 wsrep_sst_method=rsync
+
+max_connections = 10240
+innodb_locks_unsafe_for_binlog=1
+query_cache_size=0
+query_cache_type=0
+innodb_log_file_size=100M
+innodb_file_per_table
+innodb_flush_log_at_trx_commit=2
 [embedded]
 [mariadb]
 [mariadb-10.2]

@@ -30,3 +30,7 @@ https://devopsviet.com/2020/05/17/high-availability-huong-dan-trien-khai-rabbit-
 ## Phần 11: Cấu hình horizon
 
 ## Phần 12: Cấu hình Cinder
+
+Tham khảo tài liệu tích hợp Ceph
+- [Cài Ceph AIO](/docs/ops-ha-queen/cephaio.md)
+- [Tích hợp OPS HA + Ceph](/docs/ops-ha-queen/ceph-ops-ha.md)
