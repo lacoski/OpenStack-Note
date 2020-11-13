@@ -9,6 +9,7 @@ Quy hoạch Network:
 - vlan mgnt: eth0: 10.10.11.89
 - vlan provider: eth1: 10.10.12.89
 - vlan datavm: eth2: 10.10.14.89
+- vlan cephcom: eth3: 10.10.15.89
 
 ### Setup node
 
@@ -32,6 +33,10 @@ nmcli c modify eth2 ipv4.addresses 10.10.14.89/24
 nmcli c modify eth2 ipv4.method manual
 nmcli con mod eth2 connection.autoconnect yes
 
+echo "Setup IP eth3"
+nmcli c modify eth3 ipv4.addresses 10.10.15.89/24
+nmcli c modify eth3 ipv4.method manual
+nmcli con mod eth3 connection.autoconnect yes
 
 sed -i 's/SELINUX=enforcing/SELINUX=disabled/g' /etc/sysconfig/selinux
 sed -i 's/SELINUX=enforcing/SELINUX=disabled/g' /etc/selinux/config

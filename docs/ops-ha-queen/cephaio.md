@@ -6,8 +6,9 @@ https://github.com/lacoski/tutorial-ceph/blob/master/docs/setup/ceph-luminous-ai
 
 ### Phân hoạch
 
-vlan CephCOM: eth0: 10.10.11.96
-vlan CephREP: eth1: 10.10.12.96
+vlan MNGT: eth0: 10.10.11.96
+vlan CephCOM: eth1: 10.10.15.96
+vlan CephREP: eth2: 10.10.21.96
 
 4 Disk:
 - vda: sử dụng để cài OS
@@ -26,9 +27,14 @@ nmcli c modify eth0 ipv4.method manual
 nmcli con mod eth0 connection.autoconnect yes
 
 echo "Setup IP eth1"
-nmcli c modify eth1 ipv4.addresses 10.10.12.96/24
+nmcli c modify eth1 ipv4.addresses 10.10.15.96/24
 nmcli c modify eth1 ipv4.method manual
 nmcli con mod eth1 connection.autoconnect yes
+
+echo "Setup IP eth2"
+nmcli c modify eth2 ipv4.addresses 10.10.21.96/24
+nmcli c modify eth2 ipv4.method manual
+nmcli con mod eth2 connection.autoconnect yes
 
 sed -i 's/SELINUX=enforcing/SELINUX=disabled/g' /etc/sysconfig/selinux
 sed -i 's/SELINUX=enforcing/SELINUX=disabled/g' /etc/selinux/config
@@ -49,7 +55,7 @@ init 6
 Bổ sung file hosts
 ```
 cat << EOF >> /etc/hosts
-10.10.11.96 cephaio
+10.10.15.96 cephaio
 EOF
 ```
 
@@ -108,6 +114,9 @@ yum install ceph-deploy -y
 ceph-deploy --version
 ```
 
+Lưu ý:
+- Snapshot preceph
+
 ### Cấu hình ssh key
 
 ```
@@ -137,8 +146,8 @@ osd pool default pgp num = 128
 
 osd crush chooseleaf type = 0
 
-public network = 10.10.11.96/24
-cluster network = 10.10.12.96/24
+public network = 10.10.15.96/24
+cluster network = 10.10.21.96/24
 EOF
 ```
 

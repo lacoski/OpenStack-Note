@@ -4,9 +4,11 @@
 
 ### Phân hoạch
 
-vlan mgnt: eth0: 10.10.11.94
-vlan provider: eth1: 10.10.12.94
-vlan datavm: eth2: 10.10.14.94
+Quy hoạch Network:
+- vlan mgnt: eth0: 10.10.11.94
+- vlan provider: eth1: 10.10.12.94
+- vlan datavm: eth2: 10.10.14.94
+- vlan cephcom: eth3: 10.10.15.94
 
 ### Setup node
 
@@ -29,6 +31,11 @@ echo "Setup IP eth2"
 nmcli c modify eth2 ipv4.addresses 10.10.14.94/24
 nmcli c modify eth2 ipv4.method manual
 nmcli con mod eth2 connection.autoconnect yes
+
+echo "Setup IP eth3"
+nmcli c modify eth3 ipv4.addresses 10.10.15.94/24
+nmcli c modify eth3 ipv4.method manual
+nmcli con mod eth3 connection.autoconnect yes
 
 sed -i 's/SELINUX=enforcing/SELINUX=disabled/g' /etc/sysconfig/selinux
 sed -i 's/SELINUX=enforcing/SELINUX=disabled/g' /etc/selinux/config
@@ -79,7 +86,7 @@ echo "10.10.11.94 com01" >> /etc/hosts
 Lưu ý:
 - Snapshot preenv
 
-## Phần X: Cài đặt các gói cần thiết
+## Phần 2: Cài đặt các gói cần thiết
 
 ```
 yum -y install centos-release-openstack-queens
@@ -87,7 +94,7 @@ yum -y install crudini wget vim
 yum -y install python-openstackclient openstack-selinux python2-PyMySQL
 ```
 
-## Phần X: Cài đặt Nova
+## Phần 3: Cài đặt Nova
 
 ### Cài đặt gói
 
@@ -227,7 +234,7 @@ Kết quả
 +----+------------------+-------+----------+---------+-------+----------------------------+
 ```
 
-## Phần X: Cài đặt Neutron
+## Phần 4: Cài đặt Neutron
 
 ### Cài đặt gói
 

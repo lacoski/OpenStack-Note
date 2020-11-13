@@ -6,6 +6,8 @@
 
 ## Mô hình
 
+![](/docs/ops-ha-queen/images/pic2.png)
+
 ## Phần 1: Chuẩn bị môi trường
 
 Theo mô hình có 3 CTL, 1 COM, 1 Ceph All In One
