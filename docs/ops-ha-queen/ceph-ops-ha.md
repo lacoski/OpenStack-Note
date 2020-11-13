@@ -1,19 +1,26 @@
 # Tích hợp Openstack HA với Ceph
 
+Lưu ý tham khảo tài liệu:
+
+https://github.com/lacoski/tutorial-ceph/blob/master/docs/operating/ceph-vs-openstack.md
+
 ## Phần 1: Chuẩn bị
 
 ### Cài đặt gói bổ sung trên các CTL, COM
 
 > Thực hiện trên CTL và COM
 
+```
 yum install epel-release -y 
 yum install python-rbd -y
 yum install ceph-common -y
+```
 
 ### Tạo pool trên Ceph
 
 > Thực hiện trên CEPH 
 
+```
 ceph osd pool create volumes 64 64
 ceph osd pool create vms 16 16
 ceph osd pool create images 8 8
@@ -23,18 +30,23 @@ rbd pool init volumes
 rbd pool init vms
 rbd pool init images
 rbd pool init backups
+```
 
 ### Chuyển key ceph tới 3 CTL, 1 COM
 
 #### Copy sang CTL 1 2 3 (HA)
 
+```
 ssh 10.10.11.87 sudo tee /etc/ceph/ceph.conf < /etc/ceph/ceph.conf
 ssh 10.10.11.88 sudo tee /etc/ceph/ceph.conf < /etc/ceph/ceph.conf
 ssh 10.10.11.89 sudo tee /etc/ceph/ceph.conf < /etc/ceph/ceph.conf
+```
 
 #### Copy sang COM
 
+```
 ssh 10.10.11.94 sudo tee /etc/ceph/ceph.conf < /etc/ceph/ceph.conf
+```
 
 ## Phần 2: Cấu hình CEPH làm backend cho Glance-Images
 
@@ -42,14 +54,18 @@ ssh 10.10.11.94 sudo tee /etc/ceph/ceph.conf < /etc/ceph/ceph.conf
 
 #### Tạo key glance
 
+```
 cd /ceph-deploy
 ceph auth get-or-create client.glance mon 'allow r' osd 'allow class-read object_prefix rbd_children, allow rwx pool=images' > ceph.client.glance.keyring
+```
 
 #### Chuyển key glance sang node glance (3 CTL)
 
+```
 ceph auth get-or-create client.glance | ssh 10.10.11.87 sudo tee /etc/ceph/ceph.client.glance.keyring
 ceph auth get-or-create client.glance | ssh 10.10.11.88 sudo tee /etc/ceph/ceph.client.glance.keyring
 ceph auth get-or-create client.glance | ssh 10.10.11.89 sudo tee /etc/ceph/ceph.client.glance.keyring
+```
 
 ### Thực hiện trên 3 Node Controller
 
@@ -219,12 +235,15 @@ rbd -p images ls
 
 #### Tạo key cinder và cinder-backup
 
+```
 cd /ceph-deploy
 ceph auth get-or-create client.cinder mon 'allow r, allow command "osd blacklist", allow command "blacklistop"' osd 'allow class-read object_prefix rbd_children, allow rwx pool=volumes, allow rwx pool=images' > ceph.client.cinder.keyring
 ceph auth get-or-create client.cinder-backup mon 'profile rbd' osd 'profile rbd pool=backups' > ceph.client.cinder-backup.keyring
+```
 
 #### Chuyển key cinder tới các node CTL
 
+```
 ceph auth get-or-create client.cinder | ssh 10.10.11.87 sudo tee /etc/ceph/ceph.client.cinder.keyring
 ceph auth get-or-create client.cinder-backup | ssh 10.10.11.87 sudo tee /etc/ceph/ceph.client.cinder-backup.keyring
 
@@ -233,11 +252,14 @@ ceph auth get-or-create client.cinder-backup | ssh 10.10.11.88 sudo tee /etc/cep
 
 ceph auth get-or-create client.cinder | ssh 10.10.11.89 sudo tee /etc/ceph/ceph.client.cinder.keyring
 ceph auth get-or-create client.cinder-backup | ssh 10.10.11.89 sudo tee /etc/ceph/ceph.client.cinder-backup.keyring
+```
 
 #### Chuyển key cinder tới các node COM
 
+```
 ceph auth get-or-create client.cinder | ssh 10.10.11.94 sudo tee /etc/ceph/ceph.client.cinder.keyring
 ceph auth get-key client.cinder | ssh 10.10.11.94 tee /root/client.cinder
+```
 
 ### Thực hiện trên 3 Node Controller
 
@@ -494,11 +516,23 @@ ceph auth get-or-create client.nova mon 'allow r' osd 'allow class-read object_p
 
 #### Copy sang các node COM
 
+```
 ceph auth get-or-create client.nova | ssh 10.10.11.94 sudo tee /etc/ceph/ceph.client.nova.keyring
 ceph auth get-key client.nova | ssh 10.10.11.94 tee /root/client.nova
+```
 
 ### Thực hiện trên Node COM
 
+#### Phần quyền
+
+```
+chgrp nova /etc/ceph/ceph.client.nova.keyring
+chmod 0640 /etc/ceph/ceph.client.nova.keyring
+```
+
+#### Tạo file XML cho Ceph kết nối Compute
+
+```
 cat << EOF > nova-ceph.xml
 <secret ephemeral="no" private="no">
 <uuid>805b9716-7fe8-45dd-8e1e-5dfdeff8b9be</uuid>
@@ -511,3 +545,38 @@ EOF
 sudo virsh secret-define --file nova-ceph.xml
 
 virsh secret-set-value --secret 805b9716-7fe8-45dd-8e1e-5dfdeff8b9be --base64 $(cat /root/client.nova)
+```
+
+#### Chỉnh sửa file /etc/nova/nova.conf tại COM
+
+```
+[libvirt]
+...
+images_rbd_pool=vms
+images_type=rbd
+rbd_secret_uuid=805b9716-7fe8-45dd-8e1e-5dfdeff8b9be
+rbd_user=nova
+images_rbd_ceph_conf = /etc/ceph/ceph.conf
+```
+
+#### Restart service
+
+```
+systemctl restart openstack-nova-compute 
+```
+
+#### Kiểm tra
+
+Boot VM từ local disk nova
+
+Kiểm tra tại Ceph khi VM boot thành công
+
+```
+rbd -p vms ls
+```
+
+Tới đây kết thúc tài liệu tích hợp Openstack HA vs Ceph
+
+## Tham khảo
+
+https://github.com/lacoski/tutorial-ceph/blob/master/docs/operating/ceph-vs-openstack.md

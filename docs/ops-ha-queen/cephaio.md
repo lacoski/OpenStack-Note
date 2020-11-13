@@ -13,9 +13,9 @@ vlan CephREP: eth1: 10.10.12.96
 - vda: sử dụng để cài OS
 - vdb,vdc,vdd: sử dụng làm OSD (nơi chứa dữ liệu)
 
-
 ### Setup node
 
+```
 hostnamectl set-hostname cephaio
 
 echo "Setup IP eth0"
@@ -44,23 +44,32 @@ systemctl restart chronyd.service
 chronyc sources
 
 init 6
+```
 
+Bổ sung file hosts
+```
 cat << EOF >> /etc/hosts
 10.10.11.96 cephaio
 EOF
+```
 
 Lưu ý snapshot begin
 
+## Phần 2: Cài đặt Ceph
+
 ### Bổ sung user cephuser
 
+```
 sudo useradd -d /home/cephuser -m cephuser
 sudo passwd cephuser
 
 echo "cephuser ALL = (root) NOPASSWD:ALL" | sudo tee /etc/sudoers.d/cephuser
 sudo chmod 0440 /etc/sudoers.d/cephuser
+```
 
 ### Bổ sung repo cài đặt Ceph
 
+```
 cat <<EOF> /etc/yum.repos.d/ceph.repo
 [ceph]
 name=Ceph packages for $basearch
@@ -88,16 +97,20 @@ gpgkey=https://download.ceph.com/keys/release.asc
 EOF
 
 yum update -y
+```
 
 ### Cài đặt python-setuptools và Ceph deploy
 
+```
 yum install python-setuptools -y
 yum install ceph-deploy -y
 
 ceph-deploy --version
+```
 
 ### Cấu hình ssh key
 
+```
 ssh-keygen
 
 cat <<EOF> /root/.ssh/config
@@ -107,9 +120,11 @@ Host cephaio
 EOF
 
 ssh-copy-id cephaio
+```
 
 ### Cấu hình Ceph
 
+```
 mkdir /ceph-deploy && cd /ceph-deploy
 
 ceph-deploy new cephaio
@@ -125,9 +140,11 @@ osd crush chooseleaf type = 0
 public network = 10.10.11.96/24
 cluster network = 10.10.12.96/24
 EOF
+```
 
 ### Cài đặt Ceph qua Ceph deploy
 
+```
 ceph-deploy install --release luminous cephaio
 
 sudo ceph -v 
@@ -139,8 +156,11 @@ ceph-deploy mgr create cephaio
 
 sudo ceph mgr module enable dashboard
 sudo ceph mgr services
+```
 
 ### Bổ sung OSD
+
+```
 ceph-deploy disk zap cephaio /dev/vdb
 ceph-deploy disk zap cephaio /dev/vdc
 ceph-deploy disk zap cephaio /dev/vdd
@@ -148,14 +168,19 @@ ceph-deploy disk zap cephaio /dev/vdd
 ceph-deploy osd create --data /dev/vdb cephaio
 ceph-deploy osd create --data /dev/vdc cephaio
 ceph-deploy osd create --data /dev/vdd cephaio
+```
 
 ### Thay đổi cấu hình Crush map
 
+```
 cd /ceph-deploy
 sudo ceph osd getcrushmap -o crushmap
 sudo crushtool -d crushmap -o crushmap.decom
 sudo sed -i 's|step choose firstn 0 type osd|step chooseleaf firstn 0 type osd|g' crushmap.decom
 sudo crushtool -c crushmap.decom -o crushmap.new
 sudo ceph osd setcrushmap -i crushmap.new
+```
 
-Snapshot cephaiook
+## Tham khảo thêm
+
+https://github.com/lacoski/tutorial-ceph/blob/master/docs/setup/ceph-luminous-aio.md
