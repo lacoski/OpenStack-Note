@@ -1,4 +1,4 @@
-# Cài đặt CTL 1
+# Cài đặt COM 1
 
 ## Phần 1: Chuẩn bị
 
