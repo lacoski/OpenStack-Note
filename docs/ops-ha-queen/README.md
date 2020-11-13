@@ -8,7 +8,7 @@
 
 ## Phần 1: Chuẩn bị môi trường
 
-Theo mô hình có 3 CTL, 1 COM
+Theo mô hình có 3 CTL, 1 COM, 1 Ceph All In One
 
 ## Phần 2: Triển khai MariaDB 10.2
 
