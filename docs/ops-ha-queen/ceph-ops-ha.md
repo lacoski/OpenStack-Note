@@ -478,3 +478,36 @@ Kiểm tra tại Ceph
 ```
 rbd -p volumes ls
 ```
+
+
+## Phần 4: Cấu hình CEPH làm backend cho Nova-Compute
+
+### Thực hiện trên Node Ceph
+
+#### Tạo keyring cho nova
+
+```
+cd /ceph-deploy/
+
+ceph auth get-or-create client.nova mon 'allow r' osd 'allow class-read object_prefix rbd_children, allow rwx pool=vms, allow rx pool=images' -o /etc/ceph/ceph.client.nova.keyring 
+```
+
+#### Copy sang các node COM
+
+ceph auth get-or-create client.nova | ssh 10.10.11.94 sudo tee /etc/ceph/ceph.client.nova.keyring
+ceph auth get-key client.nova | ssh 10.10.11.94 tee /root/client.nova
+
+### Thực hiện trên Node COM
+
+cat << EOF > nova-ceph.xml
+<secret ephemeral="no" private="no">
+<uuid>805b9716-7fe8-45dd-8e1e-5dfdeff8b9be</uuid>
+<usage type="ceph">
+<name>client.nova secret</name>
+</usage>
+</secret>
+EOF
+
+sudo virsh secret-define --file nova-ceph.xml
+
+virsh secret-set-value --secret 805b9716-7fe8-45dd-8e1e-5dfdeff8b9be --base64 $(cat /root/client.nova)
