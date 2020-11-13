@@ -8,17 +8,29 @@
 
 ![](/docs/ops-ha-queen/images/pic2.png)
 
+
+## Tài liệu
+
+- [Cấu hình CephAIO](/docs/ops-ha-queen/cephaio.md)
+- [Cấu hình Controller 1](/docs/ops-ha-queen/ctl-1.md)
+- [Cấu hình Controller 2](/docs/ops-ha-queen/ctl-2.md)
+- [Cấu hình Controller 3](/docs/ops-ha-queen/ctl-3.md)
+- [Cấu hình Compute](/docs/ops-ha-queen/com1.md)
+- [Tích hợp OPS HA + Ceph](/docs/ops-ha-queen/ceph-ops-ha.md)
+
 ## Phần 1: Chuẩn bị môi trường
 
 Theo mô hình có 3 CTL, 1 COM, 1 Ceph All In One
 
 ## Phần 2: Triển khai MariaDB 10.2
 
-https://devopsviet.com/2020/05/17/huong-dan-cai-dat-galera-3-node-tren-centos-7/
+Tham khảo thêm:
+- https://devopsviet.com/2020/05/17/huong-dan-cai-dat-galera-3-node-tren-centos-7/
 
 ## Phần 3: Triển khai RabbitMQ Cluster
 
-https://devopsviet.com/2020/05/17/high-availability-huong-dan-trien-khai-rabbit-cluster-tren-centos-7/
+Tham khảo thêm:
+- https://devopsviet.com/2020/05/17/high-availability-huong-dan-trien-khai-rabbit-cluster-tren-centos-7/
 
 ## Phần 4: Triển khai PCS
 
@@ -38,6 +50,3 @@ https://devopsviet.com/2020/05/17/high-availability-huong-dan-trien-khai-rabbit-
 
 ## Phần 12: Cấu hình Cinder
 
-Tham khảo tài liệu tích hợp Ceph
-- [Cài Ceph AIO](/docs/ops-ha-queen/cephaio.md)
-- [Tích hợp OPS HA + Ceph](/docs/ops-ha-queen/ceph-ops-ha.md)
