@@ -1000,10 +1000,13 @@ systemctl restart httpd.service memcached.service
 - HA cho Cinder cần có Ceph
 
 ### Tải package (Trên tất cả CTL)
+```
 yum install openstack-cinder -y
+```
 
 ### Sửa cấu hình cinder
 
+```
 cp /etc/cinder/cinder.conf /etc/cinder/cinder.conf.bak 
 rm -rf /etc/cinder/cinder.conf
 
@@ -1057,24 +1060,29 @@ rabbit_ha_queues = true
 [ssl]
 [vault]
 EOF
+```
 
 ### Phân quyền
-
+```
 chown root:cinder /etc/cinder/cinder.conf
+```
 
 ### Chỉnh sửa file /etc/nova/nova.conf
-
+```
 [cinder]
 os_region_name = RegionOne
+```
 
 ### Restart lại dịch vụ nova api
-
+```
 systemctl restart openstack-nova-api.service
+```
 
 ### Enable và start dịch vụ
-
+```
 systemctl enable openstack-cinder-api.service openstack-cinder-volume.service openstack-cinder-scheduler.service
 systemctl start openstack-cinder-api.service openstack-cinder-volume.service openstack-cinder-scheduler.service
+```
 
 Trở về CTL 1 và thực hiện
 ```

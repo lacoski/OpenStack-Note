@@ -1494,10 +1494,14 @@ Kiểm tra đồng thời HAProxy Stats: http://10.10.11.93:8080/stats
 - HA cho Cinder cần có Ceph
 
 ### Tải package (Trên tất cả CTL)
+
+```
 yum install openstack-cinder -y
+```
 
 ### Tạo DB
 
+```
 mysql -u root -pWelcome123
 CREATE DATABASE cinder;
 GRANT ALL PRIVILEGES ON cinder.* TO 'cinder'@'localhost' \
@@ -1508,9 +1512,11 @@ GRANT ALL PRIVILEGES ON cinder.* TO 'cinder'@'ctl01' IDENTIFIED BY 'Welcome123';
 GRANT ALL PRIVILEGES ON cinder.* TO 'cinder'@'ctl02' IDENTIFIED BY 'Welcome123';FLUSH PRIVILEGES;
 GRANT ALL PRIVILEGES ON cinder.* TO 'cinder'@'ctl03' IDENTIFIED BY 'Welcome123';FLUSH PRIVILEGES;
 exit
+```
 
 ### Tạo mới endpoint
 
+```
 openstack user create --domain default --password Welcome123 cinder
 openstack role add --project service --user cinder admin
 openstack service create --name cinderv2 \
@@ -1531,10 +1537,11 @@ openstack endpoint create --region RegionOne \
   volumev3 internal http://10.10.11.93:8776/v3/%\(project_id\)s
 openstack endpoint create --region RegionOne \
   volumev3 admin http://10.10.11.93:8776/v3/%\(project_id\)s
-
+```
 
 ### Sửa cấu hình cinder
 
+```
 cp /etc/cinder/cinder.conf /etc/cinder/cinder.conf.bak 
 rm -rf /etc/cinder/cinder.conf
 
@@ -1588,31 +1595,37 @@ rabbit_ha_queues = true
 [ssl]
 [vault]
 EOF
-
+```
 
 ### Phân quyền
-
+```
 chown root:cinder /etc/cinder/cinder.conf
+```
 
 ### Sync db
 
+```
 su -s /bin/sh -c "cinder-manage db sync" cinder
+```
 
 ### Chỉnh sửa file /etc/nova/nova.conf
-
+```
 [cinder]
 os_region_name = RegionOne
+```
 
 ### Restart lại dịch vụ nova api
-
+```
 systemctl restart openstack-nova-api.service
+```
 
 ### Enable và start dịch vụ
-
+```
 systemctl enable openstack-cinder-api.service openstack-cinder-volume.service openstack-cinder-scheduler.service
 systemctl start openstack-cinder-api.service openstack-cinder-volume.service openstack-cinder-scheduler.service
 
 openstack volume service list
+```
 
 Kết quả
 ```
