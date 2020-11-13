@@ -10,6 +10,7 @@ vlan datavm: eth2: 10.10.14.94
 
 ### Setup node
 
+```
 hostnamectl set-hostname com01
 
 echo "Setup IP eth0"
@@ -43,9 +44,11 @@ systemctl restart chronyd.service
 chronyc sources
 
 init 6
+```
 
 ### Chuẩn bị sysctl
 
+```
 echo 'net.ipv4.conf.all.arp_ignore = 1'  >> /etc/sysctl.conf
 echo 'net.ipv4.conf.all.arp_announce = 2'  >> /etc/sysctl.conf
 echo 'net.ipv4.conf.all.rp_filter = 2'  >> /etc/sysctl.conf
@@ -62,31 +65,39 @@ net.ipv4.conf.default.rp_filter = 0
 EOF
 
 sysctl -p
+```
 
 ### Cấu hình hostname
 
+```
 echo "10.10.11.87 ctl01" >> /etc/hosts
 echo "10.10.11.88 ctl02" >> /etc/hosts
 echo "10.10.11.89 ctl03" >> /etc/hosts
 echo "10.10.11.94 com01" >> /etc/hosts
+```
 
 Lưu ý:
 - Snapshot preenv
 
 ## Phần X: Cài đặt các gói cần thiết
 
+```
 yum -y install centos-release-openstack-queens
 yum -y install crudini wget vim
 yum -y install python-openstackclient openstack-selinux python2-PyMySQL
+```
 
 ## Phần X: Cài đặt Nova
 
 ### Cài đặt gói
 
+```
 yum install openstack-nova-compute libvirt-client -y
+```
 
 ### Cấu hình nova
 
+```
 cp /etc/nova/nova.conf  /etc/nova/nova.conf.org
 rm -rf /etc/nova/nova.conf
 
@@ -183,17 +194,21 @@ novncproxy_base_url = http://10.10.11.93:6080/vnc_auto.html
 [xenserver]
 [xvp]
 EOF
+```
 
 ### Khởi động dịch vụ
 
+```
 chown root:nova /etc/nova/nova.conf
 systemctl enable libvirtd.service openstack-nova-compute.service
 systemctl restart libvirtd.service openstack-nova-compute.service
+```
 
 Về CTL 1 thực hiện `openstack compute service list`
 
 Kết quả
 
+```
 [root@ctl01 ~]# openstack compute service list
 +----+------------------+-------+----------+---------+-------+----------------------------+
 | ID | Binary           | Host  | Zone     | Status  | State | Updated At                 |
@@ -210,16 +225,20 @@ Kết quả
 | 54 | nova-consoleauth | ctl03 | internal | enabled | up    | 2020-11-12T06:54:07.000000 |
 | 72 | nova-compute     | com01 | nova     | enabled | up    | 2020-11-12T06:54:07.000000 |
 +----+------------------+-------+----------+---------+-------+----------------------------+
+```
 
 ## Phần X: Cài đặt Neutron
 
 ### Cài đặt gói
 
+```
 yum install openstack-neutron openstack-neutron-ml2 \
   openstack-neutron-linuxbridge ebtables -y
+```
 
 ### Cấu hình neutron
 
+```
 cp /etc/neutron/neutron.conf /etc/neutron/neutron.conf.org 
 rm -rf /etc/neutron/neutron.conf
 
@@ -258,9 +277,11 @@ amqp_durable_queues= true
 [quotas]
 [ssl]
 EOF
+```
 
 ### Cấu hình LB Agent
 
+```
 cp /etc/neutron/plugins/ml2/linuxbridge_agent.ini /etc/neutron/plugins/ml2/linuxbridge_agent.ini.org 
 rm -rf /etc/neutron/plugins/ml2/linuxbridge_agent.ini
 
@@ -279,10 +300,11 @@ enable_vxlan = true
 local_ip = 10.10.14.94
 l2_population = true
 EOF
-
+```
 
 ### Cấu hình DHCP Agent
 
+```
 cp /etc/neutron/dhcp_agent.ini /etc/neutron/dhcp_agent.ini.org
 rm -rf /etc/neutron/dhcp_agent.ini
 
@@ -295,10 +317,10 @@ force_metadata = True
 [agent]
 [ovs]
 EOF
-
+```
 
 ### Cấu hình metadata agent
-
+```
 cp /etc/neutron/metadata_agent.ini /etc/neutron/metadata_agent.ini.org 
 rm -rf /etc/neutron/metadata_agent.ini
 
@@ -309,8 +331,10 @@ metadata_proxy_shared_secret = Welcome123
 [agent]
 [cache]
 EOF
+```
 
 ### Thêm vào file /etc/nova/nova.conf
+```
 [neutron]
 url = http://10.10.11.93:9696
 auth_url = http://10.10.11.93:35357
@@ -321,20 +345,24 @@ region_name = RegionOne
 project_name = service
 username = neutron
 password = Welcome123
-
+```
 
 ### Phân quyền
 
+```
 chown root:neutron /etc/neutron/metadata_agent.ini /etc/neutron/neutron.conf /etc/neutron/dhcp_agent.ini /etc/neutron/plugins/ml2/linuxbridge_agent.ini
+```
 
 ### Khởi động lại dịch vụ nova-compute
-
+```
 systemctl restart libvirtd.service openstack-nova-compute
+```
 
 ### Khởi động dịch vụ
-
+```
 systemctl enable neutron-linuxbridge-agent.service neutron-dhcp-agent.service neutron-metadata-agent.service
 systemctl restart neutron-linuxbridge-agent.service neutron-dhcp-agent.service neutron-metadata-agent.service
+```
 
 Sau bước này về CTL thực hiện `openstack network agent list`
 
