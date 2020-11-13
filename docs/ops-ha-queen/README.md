@@ -1,5 +1,10 @@
 # Tài liệu hướng dẫn 
 
+## Phân hoạch
+
+![](/docs/ops-ha-queen/images/pic1.png)
+
+## Mô hình
 
 ## Phần 1: Chuẩn bị môi trường
 
