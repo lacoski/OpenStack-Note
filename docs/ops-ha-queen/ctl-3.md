@@ -119,9 +119,10 @@ innodb_autoinc_lock_mode=2
 wsrep_cluster_name="galera_cluster"
 bind-address=10.10.11.89
 wsrep_node_address="10.10.11.89"
-wsrep_node_name="node1"
+wsrep_node_name="ctl03"
 wsrep_sst_method=rsync
 
+skip-name-resolve
 max_connections = 10240
 innodb_locks_unsafe_for_binlog=1
 query_cache_size=0
