@@ -1665,5 +1665,10 @@ Kiểm tra đồng thời HAProxy Stats: http://10.10.11.93:8080/stats
 
 Sau bước này cấu hình tích hợp Ceph
 
+[Tích hợp OPS HA + Ceph](/docs/ops-ha-queen/ceph-ops-ha.md)
+
+
+## Tham khảo thêm
+
 https://github.com/lacoski/tutorial-ceph/blob/master/docs/operating/ceph-vs-openstack.md
 

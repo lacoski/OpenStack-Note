@@ -334,9 +334,11 @@ Kiểm tra
 Lưu ý:
 - Chỉ quan tâm `cinder-scheduler: ceph` và `cinder-volume: ceph@ceph` phải up
 
+Tạo mới type cinder ceph
+```
 cinder type-create ceph
 cinder type-key ceph set volume_backend_name=ceph
-
+```
 #### Tại CTL 2
 
 Phần quyền
@@ -469,6 +471,7 @@ Lưu ý:
 
 #### Thực hiện trên COM
 
+```
 cat > ceph-secret.xml <<EOF
 <secret ephemeral='no' private='no'>
 <uuid>414ba151-4068-40c6-9d7b-84998ce6a5a6</uuid>
@@ -477,12 +480,15 @@ cat > ceph-secret.xml <<EOF
 </usage>
 </secret>
 EOF
-
 sudo virsh secret-define --file ceph-secret.xml
 
 virsh secret-set-value --secret 414ba151-4068-40c6-9d7b-84998ce6a5a6 --base64 $(cat /root/client.cinder)
+```
 
+#### Khởi động lại dịch vụ
+```
 systemctl restart openstack-nova-compute
+```
 
 #### Kiểm tra
 
