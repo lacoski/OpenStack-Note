@@ -666,7 +666,11 @@ export OS_USER_DOMAIN_NAME=Default
 export OS_PROJECT_DOMAIN_NAME=Default
 export OS_AUTH_URL=http://10.10.11.93:35357/v3
 export OS_IDENTITY_API_VERSION=3
+```
 
+### Tạo domain, user
+
+```
 openstack domain create --description "An Example Domain" example
 openstack project create --domain default \
   --description "Service Project" service
@@ -676,10 +680,7 @@ openstack project create --domain default \
 
 openstack user create --domain default \
   --password Welcome123 demo
-```
 
-### Tạo domain, user
-```
 openstack role create user
 openstack role add --project demo --user demo user
 
