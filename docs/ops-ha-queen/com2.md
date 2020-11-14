@@ -1,39 +1,39 @@
-# Cài đặt COM 1
+# Cài đặt COM 2
 
 ## Phần 1: Chuẩn bị
 
 ### Phân hoạch
 
 Quy hoạch Network:
-- vlan mgnt: eth0: 10.10.11.94
-- vlan provider: eth1: 10.10.12.94
-- vlan datavm: eth2: 10.10.14.94
-- vlan cephcom: eth3: 10.10.15.94
+- vlan mgnt: eth0: 10.10.11.95
+- vlan provider: eth1: 10.10.12.95
+- vlan datavm: eth2: 10.10.14.95
+- vlan cephcom: eth3: 10.10.15.95
 
 ### Setup node
 
 ```
-hostnamectl set-hostname com01
+hostnamectl set-hostname com02
 
 echo "Setup IP eth0"
-nmcli c modify eth0 ipv4.addresses 10.10.11.94/24
+nmcli c modify eth0 ipv4.addresses 10.10.11.95/24
 nmcli c modify eth0 ipv4.gateway 10.10.11.1
 nmcli c modify eth0 ipv4.dns 8.8.8.8
 nmcli c modify eth0 ipv4.method manual
 nmcli con mod eth0 connection.autoconnect yes
 
 echo "Setup IP eth1"
-nmcli c modify eth1 ipv4.addresses 10.10.12.94/24
+nmcli c modify eth1 ipv4.addresses 10.10.12.95/24
 nmcli c modify eth1 ipv4.method manual
 nmcli con mod eth1 connection.autoconnect yes
 
 echo "Setup IP eth2"
-nmcli c modify eth2 ipv4.addresses 10.10.14.94/24
+nmcli c modify eth2 ipv4.addresses 10.10.14.95/24
 nmcli c modify eth2 ipv4.method manual
 nmcli con mod eth2 connection.autoconnect yes
 
 echo "Setup IP eth3"
-nmcli c modify eth3 ipv4.addresses 10.10.15.94/24
+nmcli c modify eth3 ipv4.addresses 10.10.15.95/24
 nmcli c modify eth3 ipv4.method manual
 nmcli con mod eth3 connection.autoconnect yes
 

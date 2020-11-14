@@ -82,6 +82,7 @@ echo "10.10.11.87 ctl01" >> /etc/hosts
 echo "10.10.11.88 ctl02" >> /etc/hosts
 echo "10.10.11.89 ctl03" >> /etc/hosts
 echo "10.10.11.94 com01" >> /etc/hosts
+echo "10.10.11.95 com02" >> /etc/hosts
 ```
 
 ### Setup keypair
