@@ -5,7 +5,7 @@
 ### Phân hoạch
 
 Quy hoạch Network:
-- VIP MNGT: 10.10.11.94
+- VIP MNGT: 10.10.11.93
 - vlan mgnt: eth0: 10.10.11.87
 - vlan provider: eth1: 10.10.12.87
 - vlan datavm: eth2: 10.10.14.87
