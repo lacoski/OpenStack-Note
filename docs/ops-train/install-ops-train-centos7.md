@@ -115,6 +115,11 @@ nmcli c modify eth2 ipv4.addresses 10.10.14.88/24
 nmcli c modify eth2 ipv4.method manual
 nmcli con mod eth2 connection.autoconnect yes
 
+systemctl disable NetworkManager
+systemctl stop NetworkManager
+systemctl start network
+systemctl enable network
+
 sed -i 's/SELINUX=enforcing/SELINUX=disabled/g' /etc/sysconfig/selinux
 sed -i 's/SELINUX=enforcing/SELINUX=disabled/g' /etc/selinux/config
 systemctl stop firewalld
@@ -165,6 +170,11 @@ sed -i 's/SELINUX=enforcing/SELINUX=disabled/g' /etc/sysconfig/selinux
 sed -i 's/SELINUX=enforcing/SELINUX=disabled/g' /etc/selinux/config
 systemctl stop firewalld
 systemctl disable firewalld
+
+systemctl disable NetworkManager
+systemctl stop NetworkManager
+systemctl start network
+systemctl enable network
 
 curl -Lso- https://raw.githubusercontent.com/nhanhoadocs/scripts/master/Utilities/cmdlog.sh | bash
 
@@ -279,6 +289,8 @@ sed -i "s/-l 127.0.0.1,::1/-l 127.0.0.1,::1,10.10.11.87/g" /etc/sysconfig/memcac
 
 systemctl enable memcached.service
 systemctl restart memcached.service
+
+ss -atun | grep 11211
 
 ## Phần 4: Cài đặt MariaDB
 
@@ -1378,21 +1390,38 @@ cat << EOF >> $filehtml
 </html>
 EOF
 
+```
+cp /etc/openstack-dashboard/local_settings /etc/openstack-dashboard/local_settings.org
+
+### Thay đổi cấu hình trong file /etc/openstack-dashboard/local_settings
+ALLOWED_HOSTS = ['*',]
+OPENSTACK_API_VERSIONS = {
+    "identity": 3,
+    "image": 2,
+    "volume": 2,
+}
 
 
+### Lưu ý thêm SESSION_ENGINE vào trên dòng CACHE như bên dưới
+SESSION_ENGINE = 'django.contrib.sessions.backends.cache'
+CACHES = {
+    'default': {
+         'BACKEND': 'django.core.cache.backends.memcached.MemcachedCache',
+         'LOCATION': ['10.10.11.87:11211']
+    }
+}
+OPENSTACK_HOST = "10.10.11.87"
+OPENSTACK_KEYSTONE_URL = "http://10.10.11.87:5000/v3"
+OPENSTACK_KEYSTONE_DEFAULT_DOMAIN = "Default"
+OPENSTACK_KEYSTONE_DEFAULT_ROLE = "user"
 
+TIME_ZONE = "Asia/Ho_Chi_Minh"
 
+## Thêm mới
+WEBROOT = '/dashboard/'
+```
 
-
-
-
-
-
-
-
-
-
-
+systemctl restart httpd.service memcached.service
 
 
 
@@ -1407,3 +1436,11 @@ https://github.com/meditechopen/meditech-ghichep-openstack/blob/master/docs/04.N
 https://github.com/meditechopen/meditech-ghichep-openstack/blob/master/docs/04.Neutron/OpenStack-Networking-basic.md
 
 https://superuser.openstack.org/articles/openvswitch-openstack-sdn/
+
+https://www.server-world.info/en/note?os=CentOS_7&p=download
+
+https://www.server-world.info/en/note?os=CentOS_7&p=openstack_train&f=10
+
+https://www.server-world.info/en/note?os=CentOS_7&p=openstack_train2&f=3
+
+https://louky0714.tistory.com/entry/Openstack-Train-Error-The-requested-URL-authlogin-was-not-found-on-this-server
