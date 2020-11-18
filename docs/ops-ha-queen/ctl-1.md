@@ -599,7 +599,12 @@ connection = mysql+pymysql://keystone:Welcome123@10.10.11.93/keystone
 [oslo_messaging_amqp]
 [oslo_messaging_kafka]
 [oslo_messaging_notifications]
+#driver = messagingv2
 [oslo_messaging_rabbit]
+rabbit_retry_interval = 1
+rabbit_retry_backoff = 2
+amqp_durable_queues = true
+rabbit_ha_queues = true
 [oslo_messaging_zmq]
 [oslo_middleware]
 [oslo_policy]
@@ -817,7 +822,12 @@ password = Welcome123
 [oslo_messaging_amqp]
 [oslo_messaging_kafka]
 [oslo_messaging_notifications]
+#driver = messagingv2
 [oslo_messaging_rabbit]
+rabbit_retry_interval = 1
+rabbit_retry_backoff = 2
+amqp_durable_queues = true
+rabbit_ha_queues = true
 [oslo_messaging_zmq]
 [oslo_middleware]
 [oslo_policy]
@@ -853,7 +863,12 @@ password = Welcome123
 [oslo_messaging_amqp]
 [oslo_messaging_kafka]
 [oslo_messaging_notifications]
+#driver = messagingv2
 [oslo_messaging_rabbit]
+rabbit_retry_interval = 1
+rabbit_retry_backoff = 2
+amqp_durable_queues = true
+rabbit_ha_queues = true
 [oslo_messaging_zmq]
 [oslo_policy]
 [paste_deploy]
@@ -1020,6 +1035,7 @@ metadata_host=10.10.11.87
 metadata_listen=10.10.11.87
 metadata_listen_port=8775
 firewall_driver = nova.virt.firewall.NoopFirewallDriver
+notify_on_state_change = vm_and_task_state
 transport_url = rabbit://openstack:Welcome123@10.10.11.87:5672,openstack:Welcome123@10.10.11.88:5672,openstack:Welcome123@10.10.11.89:5672
 [api]
 auth_strategy = keystone
@@ -1072,11 +1088,12 @@ lock_path = /var/lib/nova/tmp
 [oslo_messaging_amqp]
 [oslo_messaging_kafka]
 [oslo_messaging_notifications]
+#driver = messagingv2
 [oslo_messaging_rabbit]
-rabbit_ha_queues = true
 rabbit_retry_interval = 1
 rabbit_retry_backoff = 2
-amqp_durable_queues= true
+amqp_durable_queues = true
+rabbit_ha_queues = true
 [oslo_messaging_zmq]
 [oslo_middleware]
 [oslo_policy]
@@ -1270,6 +1287,7 @@ lock_path = /var/lib/neutron/tmp
 [oslo_messaging_amqp]
 [oslo_messaging_kafka]
 [oslo_messaging_notifications]
+#driver = messagingv2
 [oslo_messaging_rabbit]
 rabbit_retry_interval = 1
 rabbit_retry_backoff = 2
@@ -1586,6 +1604,7 @@ lock_path = /var/lib/cinder/tmp
 [oslo_messaging_amqp]
 [oslo_messaging_kafka]
 [oslo_messaging_notifications]
+#driver = messagingv2
 [oslo_messaging_rabbit]
 rabbit_retry_interval = 1
 rabbit_retry_backoff = 2

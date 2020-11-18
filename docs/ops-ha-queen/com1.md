@@ -162,11 +162,12 @@ lock_path = /var/lib/nova/tmp
 [oslo_messaging_amqp]
 [oslo_messaging_kafka]
 [oslo_messaging_notifications]
+#driver = messagingv2
 [oslo_messaging_rabbit]
-rabbit_ha_queues = true
 rabbit_retry_interval = 1
 rabbit_retry_backoff = 2
-amqp_durable_queues= true
+amqp_durable_queues = true
+rabbit_ha_queues = true
 [oslo_messaging_zmq]
 [oslo_middleware]
 [oslo_policy]
@@ -273,11 +274,12 @@ lock_path = /var/lib/neutron/tmp
 [oslo_messaging_amqp]
 [oslo_messaging_kafka]
 [oslo_messaging_notifications]
+#driver = messagingv2
 [oslo_messaging_rabbit]
-rabbit_ha_queues = true
 rabbit_retry_interval = 1
 rabbit_retry_backoff = 2
-amqp_durable_queues= true
+amqp_durable_queues = true
+rabbit_ha_queues = true
 [oslo_messaging_zmq]
 [oslo_middleware]
 [oslo_policy]
