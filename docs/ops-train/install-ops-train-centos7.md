@@ -889,7 +889,7 @@ chown root:nova /etc/nova/nova.conf
 systemctl enable libvirtd.service openstack-nova-compute.service
 systemctl restart libvirtd.service openstack-nova-compute.service
 
-### Trên COM2
+### Trên compute 02
 
 yum install -y openstack-nova-compute
 
@@ -1123,7 +1123,7 @@ l2_population = True
 [network_log]
 [ovs]
 bridge_mappings = provider:br-eth1
-local_ip=10.10.11.87
+local_ip=10.10.14.87
 [securitygroup]
 enable_security_group = True
 firewall_driver = iptables_hybrid
@@ -1227,11 +1227,16 @@ systemctl enable neutron-server.service \
 systemctl restart neutron-server.service \
   neutron-openvswitch-agent.service neutron-l3-agent.service
 
-### Trên COMPUTE
+### Trên COMPUTE 1
 
 yum install openstack-neutron openstack-neutron-ml2 \
   openstack-neutron-openvswitch ebtables -y
 
+### Bật ovs
+systemctl enable openvswitch
+systemctl restart openvswitch
+
+### Cấu hình
 mv /etc/neutron/neutron.{conf,conf.bk}
 
 cat << EOF >> /etc/neutron/neutron.conf
@@ -1284,7 +1289,158 @@ l2_population = True
 [network_log]
 [ovs]
 bridge_mappings = provider:br-eth1
-local_ip=10.10.11.88
+local_ip=10.10.14.88
+[securitygroup]
+firewall_driver = neutron.agent.linux.iptables_firewall.OVSHybridIptablesFirewallDriver
+[xenapi]
+EOF
+
+### Cấu hình dhcp agent
+cp /etc/neutron/dhcp_agent.ini /etc/neutron/dhcp_agent.ini.org
+rm -rf /etc/neutron/dhcp_agent.ini
+
+cat << EOF >> /etc/neutron/dhcp_agent.ini
+[DEFAULT]
+interface_driver = openvswitch
+dhcp_driver = neutron.agent.linux.dhcp.Dnsmasq
+enable_isolated_metadata = True
+force_metadata = True
+[agent]
+[ovs]
+EOF
+
+### Cấu hình metadata agent
+cp /etc/neutron/metadata_agent.ini /etc/neutron/metadata_agent.ini.org 
+rm -rf /etc/neutron/metadata_agent.ini
+
+cat << EOF >> /etc/neutron/metadata_agent.ini
+[DEFAULT]
+nova_metadata_host = 10.10.11.87
+metadata_proxy_shared_secret = Welcome123
+[agent]
+[cache]
+EOF
+
+### Thêm vào file /etc/nova/nova.conf
+[neutron]
+url = http://10.10.11.87:9696
+auth_url = http://10.10.11.87:35357
+auth_type = password
+project_domain_name = default
+user_domain_name = default
+region_name = RegionOne
+project_name = service
+username = neutron
+password = Welcome123
+
+chown root:neutron /etc/neutron/metadata_agent.ini /etc/neutron/neutron.conf /etc/neutron/dhcp_agent.ini /etc/neutron/plugins/ml2/openvswitch_agent.ini
+
+### Thay đổi cấu hình card dùng làm provider
+
+ovs-vsctl add-br br-eth1
+ovs-vsctl add-port br-eth1 eth1
+
+### Thay đổi file cấu hình card mạng của eth1
+
+cp /etc/sysconfig/network-scripts/ifcfg-eth1 /etc/sysconfig/network-scripts/bak-eth1
+rm -rf /etc/sysconfig/network-scripts/ifcfg-eth1
+
+cat << EOF >> /etc/sysconfig/network-scripts/ifcfg-eth1
+DEVICE=eth1
+NAME=eth1
+DEVICETYPE=ovs
+TYPE=OVSPort
+OVS_BRIDGE=br-eth1
+ONBOOT=yes
+BOOTPROTO=none
+BONDING_MASTER=yes
+BONDING_OPTS="mode=1 miimon=100"
+NM_CONTROLLED=no
+EOF
+
+cat << EOF >> /etc/sysconfig/network-scripts/ifcfg-br-eth1
+ONBOOT=yes
+DEVICE=br-eth1
+NAME=br-eth1
+DEVICETYPE=ovs
+OVSBOOTPROTO=none
+TYPE=OVSBridge
+EOF
+
+### Restart network
+systemctl restart network
+
+systemctl restart openstack-nova-compute
+
+
+
+systemctl enable neutron-openvswitch-agent.service neutron-dhcp-agent.service neutron-metadata-agent.service
+systemctl start neutron-openvswitch-agent.service neutron-dhcp-agent.service neutron-metadata-agent.service
+
+
+### Trên COMPUTE 2
+
+yum install openstack-neutron openstack-neutron-ml2 \
+  openstack-neutron-openvswitch ebtables -y
+
+### Bật ovs
+systemctl enable openvswitch
+systemctl restart openvswitch
+
+### Cấu hình
+mv /etc/neutron/neutron.{conf,conf.bk}
+
+cat << EOF >> /etc/neutron/neutron.conf
+[DEFAULT]
+transport_url = rabbit://openstack:Welcome123@10.10.11.87:5672
+auth_strategy = keystone
+[agent]
+[cors]
+[database]
+[keystone_authtoken]
+auth_uri = http://10.10.11.87:5000
+auth_url = http://10.10.11.87:5000
+memcached_servers = 10.10.11.87:11211
+auth_type = password
+project_domain_name = default
+user_domain_name = default
+project_name = service
+username = neutron
+password = Welcome123
+[matchmaker_redis]
+[nova]
+[oslo_concurrency]
+lock_path = /var/lib/neutron/tmp
+[oslo_messaging_amqp]
+[oslo_messaging_kafka]
+[oslo_messaging_notifications]
+[oslo_messaging_rabbit]
+rabbit_ha_queues = true
+rabbit_retry_interval = 1
+rabbit_retry_backoff = 2
+amqp_durable_queues= true
+[oslo_messaging_zmq]
+[oslo_middleware]
+[oslo_policy]
+[quotas]
+[ssl]
+EOF
+
+
+### Cấu hình file ovs agent
+cp /etc/neutron/plugins/ml2/openvswitch_agent.ini /etc/neutron/plugins/ml2/openvswitch_agent.ini.org 
+rm -rf /etc/neutron/plugins/ml2/openvswitch_agent.ini
+
+cat << EOF >> /etc/neutron/plugins/ml2/openvswitch_agent.ini
+[DEFAULT]
+interface_driver = openvswitch
+[agent]
+tunnel_types=vxlan
+l2_population = True
+[network_log]
+[ovs]
+bridge_mappings = provider:br-eth1
+local_ip=10.10.14.89
 [securitygroup]
 firewall_driver = neutron.agent.linux.iptables_firewall.OVSHybridIptablesFirewallDriver
 [xenapi]
@@ -1369,6 +1525,7 @@ systemctl restart openstack-nova-compute
 
 systemctl enable neutron-openvswitch-agent.service neutron-dhcp-agent.service neutron-metadata-agent.service
 systemctl start neutron-openvswitch-agent.service neutron-dhcp-agent.service neutron-metadata-agent.service
+
 
 ## Cấu hình horizon
 
