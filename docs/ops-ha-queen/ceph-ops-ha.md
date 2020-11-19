@@ -46,6 +46,7 @@ ssh 10.10.11.89 sudo tee /etc/ceph/ceph.conf < /etc/ceph/ceph.conf
 
 ```
 ssh 10.10.11.94 sudo tee /etc/ceph/ceph.conf < /etc/ceph/ceph.conf
+ssh 10.10.11.95 sudo tee /etc/ceph/ceph.conf < /etc/ceph/ceph.conf
 ```
 
 ## Phần 2: Cấu hình CEPH làm backend cho Glance-Images
@@ -259,6 +260,9 @@ ceph auth get-or-create client.cinder-backup | ssh 10.10.11.89 sudo tee /etc/cep
 ```
 ceph auth get-or-create client.cinder | ssh 10.10.11.94 sudo tee /etc/ceph/ceph.client.cinder.keyring
 ceph auth get-key client.cinder | ssh 10.10.11.94 tee /root/client.cinder
+
+ceph auth get-or-create client.cinder | ssh 10.10.11.95 sudo tee /etc/ceph/ceph.client.cinder.keyring
+ceph auth get-key client.cinder | ssh 10.10.11.95 tee /root/client.cinder
 ```
 
 ### Thực hiện trên 3 Node Controller

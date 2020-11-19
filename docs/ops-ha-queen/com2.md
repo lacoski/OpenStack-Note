@@ -113,7 +113,7 @@ cat << EOF >> /etc/nova/nova.conf
 [DEFAULT]
 enabled_apis = osapi_compute,metadata
 transport_url = rabbit://openstack:Welcome123@10.10.11.87:5672,openstack:Welcome123@10.10.11.88:5672,openstack:Welcome123@10.10.11.89:5672
-my_ip = 10.10.11.94
+my_ip = 10.10.11.95
 use_neutron = True
 firewall_driver = nova.virt.firewall.NoopFirewallDriver
 [api]
@@ -195,7 +195,7 @@ password = Welcome123
 [vnc]
 enabled = True
 server_listen = 0.0.0.0
-server_proxyclient_address = 10.10.11.94
+server_proxyclient_address = 10.10.11.95
 novncproxy_base_url = http://10.10.11.93:6080/vnc_auto.html
 [workarounds]
 [wsgi]
@@ -221,17 +221,17 @@ Kết quả
 +----+------------------+-------+----------+---------+-------+----------------------------+
 | ID | Binary           | Host  | Zone     | Status  | State | Updated At                 |
 +----+------------------+-------+----------+---------+-------+----------------------------+
-|  3 | nova-scheduler   | ctl01 | internal | enabled | up    | 2020-11-12T06:54:03.000000 |
-|  6 | nova-conductor   | ctl01 | internal | enabled | up    | 2020-11-12T06:54:02.000000 |
-| 12 | nova-consoleauth | ctl01 | internal | enabled | up    | 2020-11-12T06:54:05.000000 |
-| 27 | nova-consoleauth | ctl02 | internal | enabled | up    | 2020-11-12T06:53:58.000000 |
-| 30 | nova-scheduler   | ctl02 | internal | enabled | up    | 2020-11-12T06:53:58.000000 |
-| 33 | nova-conductor   | ctl02 | internal | enabled | up    | 2020-11-12T06:54:05.000000 |
-| 48 | nova-scheduler   | ctl03 | internal | enabled | up    | 2020-11-12T06:54:07.000000 |
-| 48 | nova-scheduler   | ctl03 | internal | enabled | up    | 2020-11-12T06:54:07.000000 |
-| 51 | nova-conductor   | ctl03 | internal | enabled | up    | 2020-11-12T06:54:01.000000 |
-| 54 | nova-consoleauth | ctl03 | internal | enabled | up    | 2020-11-12T06:54:07.000000 |
-| 72 | nova-compute     | com01 | nova     | enabled | up    | 2020-11-12T06:54:07.000000 |
+|  3 | nova-scheduler   | ctl01 | internal | enabled | up    | 2020-11-15T15:52:29.000000 |
+|  6 | nova-conductor   | ctl01 | internal | enabled | up    | 2020-11-15T15:52:27.000000 |
+| 12 | nova-consoleauth | ctl01 | internal | enabled | up    | 2020-11-15T15:52:20.000000 |
+| 27 | nova-consoleauth | ctl02 | internal | enabled | up    | 2020-11-15T15:52:20.000000 |
+| 30 | nova-scheduler   | ctl02 | internal | enabled | up    | 2020-11-15T15:52:27.000000 |
+| 33 | nova-conductor   | ctl02 | internal | enabled | up    | 2020-11-15T15:52:23.000000 |
+| 48 | nova-scheduler   | ctl03 | internal | enabled | up    | 2020-11-15T15:52:26.000000 |
+| 51 | nova-conductor   | ctl03 | internal | enabled | up    | 2020-11-15T15:52:27.000000 |
+| 54 | nova-consoleauth | ctl03 | internal | enabled | up    | 2020-11-15T15:52:27.000000 |
+| 72 | nova-compute     | com01 | nova     | enabled | up    | 2020-11-15T15:52:20.000000 |
+| 75 | nova-compute     | com02 | nova     | enabled | up    | 2020-11-15T15:52:23.000000 |
 +----+------------------+-------+----------+---------+-------+----------------------------+
 ```
 
@@ -305,7 +305,7 @@ enable_security_group = true
 firewall_driver = neutron.agent.linux.iptables_firewall.IptablesFirewallDriver
 [vxlan]
 enable_vxlan = true
-local_ip = 10.10.14.94
+local_ip = 10.10.14.95
 l2_population = true
 EOF
 ```
@@ -381,11 +381,14 @@ Kết quả
 +--------------------------------------+--------------------+-------+-------------------+-------+-------+---------------------------+
 | ID                                   | Agent Type         | Host  | Availability Zone | Alive | State | Binary                    |
 +--------------------------------------+--------------------+-------+-------------------+-------+-------+---------------------------+
+| 134d75c0-6ad1-4070-a596-cb9f00b07701 | Linux bridge agent | com02 | None              | :-)   | UP    | neutron-linuxbridge-agent |
 | 313859ec-a3a9-4557-8dab-48d9cb404eb8 | DHCP agent         | com01 | nova              | :-)   | UP    | neutron-dhcp-agent        |
+| 4393b326-31d4-4d4d-acf4-c74418468064 | DHCP agent         | com02 | nova              | :-)   | UP    | neutron-dhcp-agent        |
 | 4791b094-781b-4ddb-b231-7e0118662a9e | Metadata agent     | com01 | None              | :-)   | UP    | neutron-metadata-agent    |
 | 94a6bd7c-14b3-4c35-af99-add86bf86b99 | Linux bridge agent | ctl01 | None              | :-)   | UP    | neutron-linuxbridge-agent |
 | 9e2a14c9-569e-4281-a2e4-271d2eb5bea4 | Linux bridge agent | ctl03 | None              | :-)   | UP    | neutron-linuxbridge-agent |
 | de83f310-b65a-4bad-bff6-cf28cde7b4b3 | Linux bridge agent | com01 | None              | :-)   | UP    | neutron-linuxbridge-agent |
+| e955fa14-6db5-48a2-9544-686f28646180 | Metadata agent     | com02 | None              | :-)   | UP    | neutron-metadata-agent    |
 | ffb2c373-5dfc-4fae-ac8d-c40fcb79153c | Linux bridge agent | ctl02 | None              | :-)   | UP    | neutron-linuxbridge-agent |
 +--------------------------------------+--------------------+-------+-------------------+-------+-------+---------------------------+
 ```
@@ -398,6 +401,7 @@ Kiểm tra theo test case:
 - Tắt tất cả service neutron, nova, glance, horizon tại CTL 1 CTL3, test tạo mới với CTL 2 up, thực hiện truy cập giao diện, cấu hình Network, tạo mới Flavor, boot VM http://10.10.11.93/
 - Tắt tất cả service neutron, nova, glance, horizon tại CTL 1 CTL2, test tạo mới với CTL 3 up, thực hiện truy cập giao diện, cấu hình Network, tạo mới Flavor, boot VM http://10.10.11.93/
 - Bật đầy đủ cả 3 node, thực hiện truy cập giao diện, cấu hình Network, tạo mới Flavor, boot VM http://10.10.11.93/
+- Boot VM chỉ định COM 2
 
 Câu lệnh
 ```
